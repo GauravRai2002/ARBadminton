@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    AndroidManifest.xml for AR Badminton Net
+    Adds screen recording permissions and declares the transparent
+    helper activity used for MediaProjection permission prompts.
+    Unity's default activity remains the main launcher.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.arbadmintonnet">
+
+    <!-- Required for MediaProjection screen recording -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+
+    <application>
+        <!-- Transparent helper activity for MediaProjection permission dialog only -->
+        <activity
+            android:name="com.arbadmintonnet.replay.ScreenRecorderActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+    </application>
+</manifest>

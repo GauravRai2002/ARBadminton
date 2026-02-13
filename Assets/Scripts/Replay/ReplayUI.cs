@@ -28,6 +28,8 @@ namespace ARBadmintonNet.Replay
         private string currentClipPath;
         private bool isSetup = false;
         private bool isRecording = false;
+        private bool isWaitingForPermission = false;
+        private GameObject permissionAlert;
         
         // Colors
         private static readonly Color recordOffColor = new Color(0.12f, 0.12f, 0.18f, 0.85f);
@@ -53,6 +55,8 @@ namespace ARBadmintonNet.Replay
             {
                 replayManager.OnReplayReady += OnReplayReady;
                 replayManager.OnReplayError += OnReplayError;
+                replayManager.OnBufferingStarted += OnBufferingConfirmed;
+                replayManager.OnBufferingFailed += OnBufferingDenied;
             }
         }
         
@@ -62,6 +66,8 @@ namespace ARBadmintonNet.Replay
             {
                 replayManager.OnReplayReady -= OnReplayReady;
                 replayManager.OnReplayError -= OnReplayError;
+                replayManager.OnBufferingStarted -= OnBufferingConfirmed;
+                replayManager.OnBufferingFailed -= OnBufferingDenied;
             }
         }
         
@@ -81,6 +87,7 @@ namespace ARBadmintonNet.Replay
             CreateRecordButton();
             CreateReplayButton();
             CreateVideoOverlay();
+            CreatePermissionAlert();
         }
         
         private void CreateRecordButton()
@@ -470,6 +477,7 @@ namespace ARBadmintonNet.Replay
         private void OnRecordToggle()
         {
             if (replayManager == null) return;
+            if (isWaitingForPermission) return; // Don't allow toggling while waiting
             
             if (isRecording)
             {
@@ -482,13 +490,36 @@ namespace ARBadmintonNet.Replay
             }
             else
             {
-                // Start recording
+                // Start recording — wait for confirmation before updating UI
                 replayManager.StartBuffering();
-                isRecording = true;
-                UpdateRecordButtonState();
-                if (replayButton != null) replayButton.SetActive(true);
-                Debug.Log("[ReplayUI] Recording started by user");
+                isWaitingForPermission = true;
+                
+                // Show pending state on the button
+                if (recordBtnText != null) recordBtnText.text = "Starting...";
+                if (recordBtnImage != null) recordBtnImage.color = new Color(0.5f, 0.5f, 0.2f, 0.85f);
+                
+                Debug.Log("[ReplayUI] Recording requested, waiting for permission...");
             }
+        }
+        
+        private void OnBufferingConfirmed()
+        {
+            isWaitingForPermission = false;
+            isRecording = true;
+            UpdateRecordButtonState();
+            if (replayButton != null) replayButton.SetActive(true);
+            Debug.Log("[ReplayUI] Recording confirmed and started");
+        }
+        
+        private void OnBufferingDenied(string reason)
+        {
+            isWaitingForPermission = false;
+            isRecording = false;
+            UpdateRecordButtonState();
+            if (replayButton != null) replayButton.SetActive(false);
+            Debug.LogWarning($"[ReplayUI] Recording denied: {reason}");
+            
+            ShowPermissionAlert(reason);
         }
         
         private void UpdateRecordButtonState()
@@ -657,11 +688,13 @@ namespace ARBadmintonNet.Replay
             {
                 replayManager.StopBuffering();
                 isRecording = false;
+                isWaitingForPermission = false;
                 UpdateRecordButtonState();
             }
             
             if (recordButton != null) recordButton.SetActive(false);
             if (replayButton != null) replayButton.SetActive(false);
+            if (permissionAlert != null) permissionAlert.SetActive(false);
         }
         
         // Keep old API names working
@@ -683,6 +716,98 @@ namespace ARBadmintonNet.Replay
             
             if (videoPlayer != null)
                 videoPlayer.loopPointReached -= OnVideoFinished;
+        }
+        
+        // ====== PERMISSION ALERT ======
+        
+        private void CreatePermissionAlert()
+        {
+            permissionAlert = new GameObject("PermissionAlert");
+            permissionAlert.transform.SetParent(canvas.transform, false);
+            permissionAlert.transform.SetAsLastSibling();
+            
+            var rt = permissionAlert.AddComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.1f, 0.35f);
+            rt.anchorMax = new Vector2(0.9f, 0.65f);
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+            
+            var bg = permissionAlert.AddComponent<Image>();
+            bg.color = new Color(0.15f, 0.15f, 0.2f, 0.95f);
+            
+            // Alert message
+            var msgGO = new GameObject("Message");
+            msgGO.transform.SetParent(permissionAlert.transform, false);
+            
+            var msgRT = msgGO.AddComponent<RectTransform>();
+            msgRT.anchorMin = new Vector2(0.05f, 0.35f);
+            msgRT.anchorMax = new Vector2(0.95f, 0.9f);
+            msgRT.offsetMin = Vector2.zero;
+            msgRT.offsetMax = Vector2.zero;
+            
+            var msgTmp = msgGO.AddComponent<TextMeshProUGUI>();
+            msgTmp.text = "";
+            msgTmp.fontSize = 22;
+            msgTmp.alignment = TextAlignmentOptions.Center;
+            msgTmp.color = Color.white;
+            msgTmp.enableWordWrapping = true;
+            
+            // OK button
+            var okGO = new GameObject("OKBtn");
+            okGO.transform.SetParent(permissionAlert.transform, false);
+            
+            var okRT = okGO.AddComponent<RectTransform>();
+            okRT.anchorMin = new Vector2(0.3f, 0.05f);
+            okRT.anchorMax = new Vector2(0.7f, 0.3f);
+            okRT.offsetMin = Vector2.zero;
+            okRT.offsetMax = Vector2.zero;
+            
+            var okImg = okGO.AddComponent<Image>();
+            okImg.color = replayBtnColor;
+            
+            var okBtn = okGO.AddComponent<Button>();
+            okBtn.onClick.AddListener(() => { if (permissionAlert != null) permissionAlert.SetActive(false); });
+            
+            var okTextGO = new GameObject("Text");
+            okTextGO.transform.SetParent(okGO.transform, false);
+            
+            var okTextRT = okTextGO.AddComponent<RectTransform>();
+            okTextRT.anchorMin = Vector2.zero;
+            okTextRT.anchorMax = Vector2.one;
+            okTextRT.offsetMin = Vector2.zero;
+            okTextRT.offsetMax = Vector2.zero;
+            
+            var okTmp = okTextGO.AddComponent<TextMeshProUGUI>();
+            okTmp.text = "OK";
+            okTmp.fontSize = 24;
+            okTmp.alignment = TextAlignmentOptions.Center;
+            okTmp.color = Color.white;
+            okTmp.fontStyle = FontStyles.Bold;
+            
+            permissionAlert.SetActive(false);
+        }
+        
+        private void ShowPermissionAlert(string reason)
+        {
+            if (permissionAlert == null) return;
+            
+            var msgTmp = permissionAlert.transform.Find("Message")?.GetComponent<TextMeshProUGUI>();
+            if (msgTmp != null)
+            {
+                msgTmp.text = $"Screen Recording Denied\n\n{reason}";
+            }
+            
+            permissionAlert.SetActive(true);
+            permissionAlert.transform.SetAsLastSibling();
+            
+            // Auto-dismiss after 4 seconds
+            StartCoroutine(AutoDismissAlert(4f));
+        }
+        
+        private IEnumerator AutoDismissAlert(float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            if (permissionAlert != null) permissionAlert.SetActive(false);
         }
     }
 }
