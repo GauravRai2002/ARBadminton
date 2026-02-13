@@ -344,6 +344,8 @@ public class ScreenRecorderBridge {
 
     /**
      * Export the last N seconds of buffered video.
+     * Stops the current segment to finalize its MP4, copies it, then restarts
+     * recording.
      */
     public void exportClip(final float duration) {
         if (exportStatus == 1) {
@@ -353,61 +355,101 @@ public class ScreenRecorderBridge {
 
         exportStatus = 1; // exporting
 
-        new Thread(new Runnable() {
+        // Must finalize the current segment on main thread first
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                // Stop current recorder to finalize the MP4 file
+                String currentSegmentPath = null;
+                synchronized (segmentPaths) {
+                    if (!segmentPaths.isEmpty()) {
+                        currentSegmentPath = segmentPaths.get(segmentPaths.size() - 1);
+                    }
+                }
+
+                if (mediaRecorder != null) {
+                    try {
+                        mediaRecorder.stop();
+                        Log.d(TAG, "Stopped current segment for export");
+                    } catch (RuntimeException e) {
+                        Log.w(TAG, "Error stopping recorder for export: " + e.getMessage());
+                    }
+                    mediaRecorder.release();
+                    mediaRecorder = null;
+                }
+
+                if (virtualDisplay != null) {
+                    virtualDisplay.release();
+                    virtualDisplay = null;
+                }
+
+                final String segmentToExport = currentSegmentPath;
+
+                // Now copy the finalized file on background thread
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            if (segmentToExport == null) {
+                                errorMessage = "No recorded segments available";
+                                exportStatus = 3;
+                                restartRecording();
+                                return;
+                            }
+
+                            File srcFile = new File(segmentToExport);
+                            if (!srcFile.exists() || srcFile.length() == 0) {
+                                errorMessage = "No valid recorded segments found";
+                                exportStatus = 3;
+                                restartRecording();
+                                return;
+                            }
+
+                            // Copy to export location
+                            String exportDir = activity.getCacheDir().getAbsolutePath();
+                            long timestamp = System.currentTimeMillis() / 1000;
+                            String exportPath = exportDir + "/replay_" + timestamp + ".mp4";
+                            File exportFile = new File(exportPath);
+
+                            copyFile(srcFile, exportFile);
+
+                            exportedClipPath = exportPath;
+                            exportStatus = 2; // success
+                            Log.d(TAG, "Export successful: " + exportPath);
+
+                        } catch (Exception e) {
+                            errorMessage = "Export failed: " + e.getMessage();
+                            exportStatus = 3;
+                            Log.e(TAG, errorMessage, e);
+                        }
+
+                        // Restart recording with a new segment
+                        restartRecording();
+                    }
+                }).start();
+            }
+        });
+    }
+
+    /**
+     * Restart recording after an export by starting a new segment.
+     */
+    private void restartRecording() {
+        if (!isBuffering || mediaProjection == null)
+            return;
+
+        mainHandler.post(new Runnable() {
             @Override
             public void run() {
                 try {
-                    // Pause current recording temporarily to flush
-                    // Copy the most recent segment files
-                    List<String> filesToMerge;
-                    synchronized (segmentPaths) {
-                        filesToMerge = new ArrayList<>(segmentPaths);
-                    }
-
-                    if (filesToMerge.isEmpty()) {
-                        errorMessage = "No recorded segments available";
-                        exportStatus = 3;
-                        return;
-                    }
-
-                    // For simplicity, use the most recent segment file as the export
-                    // (In a production app, you'd merge segments using MediaMuxer)
-                    String latestSegment = filesToMerge.get(filesToMerge.size() - 1);
-                    File srcFile = new File(latestSegment);
-
-                    if (!srcFile.exists() || srcFile.length() == 0) {
-                        // Try the previous segment if current is still being written
-                        if (filesToMerge.size() > 1) {
-                            latestSegment = filesToMerge.get(filesToMerge.size() - 2);
-                            srcFile = new File(latestSegment);
-                        }
-                    }
-
-                    if (!srcFile.exists() || srcFile.length() == 0) {
-                        errorMessage = "No valid recorded segments found";
-                        exportStatus = 3;
-                        return;
-                    }
-
-                    // Copy to export location
-                    String exportDir = activity.getCacheDir().getAbsolutePath();
-                    long timestamp = System.currentTimeMillis() / 1000;
-                    String exportPath = exportDir + "/replay_" + timestamp + ".mp4";
-                    File exportFile = new File(exportPath);
-
-                    copyFile(srcFile, exportFile);
-
-                    exportedClipPath = exportPath;
-                    exportStatus = 2; // success
-                    Log.d(TAG, "Export successful: " + exportPath);
-
+                    segmentIndex++;
+                    startNewSegment();
+                    Log.d(TAG, "Recording restarted after export");
                 } catch (Exception e) {
-                    errorMessage = "Export failed: " + e.getMessage();
-                    exportStatus = 3;
-                    Log.e(TAG, errorMessage, e);
+                    Log.e(TAG, "Failed to restart recording: " + e.getMessage(), e);
                 }
             }
-        }).start();
+        });
     }
 
     private void copyFile(File src, File dst) throws IOException {
