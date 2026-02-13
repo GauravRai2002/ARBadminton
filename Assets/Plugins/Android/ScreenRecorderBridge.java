@@ -337,6 +337,17 @@ public class ScreenRecorderBridge {
         stopForegroundService();
 
         Log.d(TAG, "Clip buffering stopped");
+
+        // Clear all segment paths and delete files
+        synchronized (segmentPaths) {
+            for (String path : segmentPaths) {
+                File f = new File(path);
+                if (f.exists())
+                    f.delete();
+            }
+            segmentPaths.clear();
+        }
+        segmentIndex = 0;
     }
 
     private void cleanupRecorder() {

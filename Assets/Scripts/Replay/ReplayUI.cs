@@ -578,6 +578,11 @@ namespace ARBadmintonNet.Replay
             videoPlayer.targetTexture = renderTexture;
             videoDisplay.texture = renderTexture;
             
+            // Reset speed to normal 1x
+            currentSpeed = 1.0f;
+            videoPlayer.playbackSpeed = 1.0f;
+            if (speedText != null) speedText.text = "1.0x";
+
             videoPlayer.url = "file://" + videoPath;
             videoPlayer.Prepare();
             
