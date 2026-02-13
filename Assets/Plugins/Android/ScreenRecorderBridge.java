@@ -249,12 +249,16 @@ public class ScreenRecorderBridge {
 
         mediaRecorder.prepare();
 
-        virtualDisplay = mediaProjection.createVirtualDisplay(
-                "ScreenRecorder",
-                screenWidth, screenHeight, screenDensity,
-                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-                mediaRecorder.getSurface(),
-                null, null);
+        if (virtualDisplay == null) {
+            virtualDisplay = mediaProjection.createVirtualDisplay(
+                    "ScreenRecorder",
+                    screenWidth, screenHeight, screenDensity,
+                    DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+                    mediaRecorder.getSurface(),
+                    null, null);
+        } else {
+            virtualDisplay.setSurface(mediaRecorder.getSurface());
+        }
 
         mediaRecorder.start();
 
@@ -282,10 +286,7 @@ public class ScreenRecorderBridge {
                 mediaRecorder = null;
             }
 
-            if (virtualDisplay != null) {
-                virtualDisplay.release();
-                virtualDisplay = null;
-            }
+            // Do not release virtualDisplay here, reuse it for next segment
 
             // Trim old segments
             synchronized (segmentPaths) {
@@ -329,6 +330,11 @@ public class ScreenRecorderBridge {
             mediaProjection = null;
         }
 
+        if (virtualDisplay != null) {
+            virtualDisplay.release();
+            virtualDisplay = null;
+        }
+
         // Android 14+ requires a fresh MediaProjection token each time.
         // Reset permission state so the next startBuffering() re-requests permission.
         permissionGranted = false;
@@ -361,10 +367,8 @@ public class ScreenRecorderBridge {
             mediaRecorder = null;
         }
 
-        if (virtualDisplay != null) {
-            virtualDisplay.release();
-            virtualDisplay = null;
-        }
+        // Do not release virtualDisplay here, it might be reused.
+        // It is released in stopBuffering() when the session ends.
     }
 
     /**
@@ -404,10 +408,7 @@ public class ScreenRecorderBridge {
                     mediaRecorder = null;
                 }
 
-                if (virtualDisplay != null) {
-                    virtualDisplay.release();
-                    virtualDisplay = null;
-                }
+                // Do not release virtualDisplay here, reuse it for next segment
 
                 final String segmentToExport = currentSegmentPath;
 
