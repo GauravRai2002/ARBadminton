@@ -22,7 +22,7 @@
             android:launchMode="singleTask"
             android:resizeableActivity="true"
             android:screenOrientation="fullUser"
-            android:theme="@style/UnityThemeSelector">
+            android:theme="@style/BaseUnityGameActivityTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
