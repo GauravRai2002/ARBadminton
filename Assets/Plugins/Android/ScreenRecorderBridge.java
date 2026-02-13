@@ -329,6 +329,11 @@ public class ScreenRecorderBridge {
             mediaProjection = null;
         }
 
+        // Android 14+ requires a fresh MediaProjection token each time.
+        // Reset permission state so the next startBuffering() re-requests permission.
+        permissionGranted = false;
+        resultData = null;
+
         stopForegroundService();
 
         Log.d(TAG, "Clip buffering stopped");
