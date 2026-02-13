@@ -158,10 +158,19 @@ namespace ARBadmintonNet.Replay
             tmp.fontStyle = FontStyles.Bold;
         }
         
+        // ====== VIDEO OVERLAY & CONTROLS ======
+        
+        private Slider seekSlider;
+        private Image playPauseImg;
+        private TextMeshProUGUI speedText;
+        private bool isDraggingSlider = false;
+        private float currentSpeed = 1.0f;
+        
         private void CreateVideoOverlay()
         {
             videoOverlay = new GameObject("VideoOverlay");
             videoOverlay.transform.SetParent(canvas.transform, false);
+            videoOverlay.transform.SetAsLastSibling(); // Ensure on top
             
             var rt = videoOverlay.AddComponent<RectTransform>();
             rt.anchorMin = Vector2.zero;
@@ -170,15 +179,15 @@ namespace ARBadmintonNet.Replay
             rt.offsetMax = Vector2.zero;
             
             var bg = videoOverlay.AddComponent<Image>();
-            bg.color = new Color(0.05f, 0.05f, 0.08f, 0.97f);
+            bg.color = new Color(0.05f, 0.05f, 0.08f, 1.0f); // Fully opaque
             
-            // Video display
+            // Video display area (Top 70%)
             var videoGO = new GameObject("VideoDisplay");
             videoGO.transform.SetParent(videoOverlay.transform, false);
             
             var videoRT = videoGO.AddComponent<RectTransform>();
-            videoRT.anchorMin = new Vector2(0.03f, 0.12f);
-            videoRT.anchorMax = new Vector2(0.97f, 0.85f);
+            videoRT.anchorMin = new Vector2(0, 0.22f); // increased video height
+            videoRT.anchorMax = new Vector2(1, 1);
             videoRT.offsetMin = Vector2.zero;
             videoRT.offsetMax = Vector2.zero;
             
@@ -189,41 +198,13 @@ namespace ARBadmintonNet.Replay
             videoPlayer.playOnAwake = false;
             videoPlayer.renderMode = VideoRenderMode.RenderTexture;
             videoPlayer.aspectRatio = VideoAspectRatio.FitInside;
-            videoPlayer.isLooping = false;
-            videoPlayer.loopPointReached += OnVideoFinished;
+            videoPlayer.isLooping = true;
             
             // Title
             CreateOverlayLabel(videoOverlay.transform, "Title",
-                "<< Instant Replay", 30,
+                "INSTANT REPLAY", 30,
                 new Vector2(0.5f, 1), new Vector2(0.5f, 1),
-                new Vector2(0, -70), new Vector2(400, 50),
-                Color.white);
-            
-            // Close button
-            var closeBtnGO = new GameObject("CloseBtn");
-            closeBtnGO.transform.SetParent(videoOverlay.transform, false);
-            
-            var closeRT = closeBtnGO.AddComponent<RectTransform>();
-            closeRT.anchorMin = new Vector2(0.5f, 0);
-            closeRT.anchorMax = new Vector2(0.5f, 0);
-            closeRT.anchoredPosition = new Vector2(0, 70);
-            closeRT.sizeDelta = new Vector2(200, 55);
-            
-            var closeImg = closeBtnGO.AddComponent<Image>();
-            closeImg.color = closeBtnColor;
-            
-            var closeBtn = closeBtnGO.AddComponent<Button>();
-            var closeColors = closeBtn.colors;
-            closeColors.normalColor = closeBtnColor;
-            closeColors.highlightedColor = new Color(0.35f, 0.35f, 0.4f, 0.9f);
-            closeColors.pressedColor = new Color(0.45f, 0.45f, 0.5f, 1f);
-            closeBtn.colors = closeColors;
-            closeBtn.onClick.AddListener(CloseReplay);
-            
-            CreateOverlayLabel(closeBtnGO.transform, "Text",
-                "X Close", 22,
-                Vector2.zero, Vector2.one,
-                Vector2.zero, Vector2.zero,
+                new Vector2(0, -60), new Vector2(400, 50),
                 Color.white);
             
             // Loading indicator
@@ -242,7 +223,224 @@ namespace ARBadmintonNet.Replay
             loadTmp.alignment = TextAlignmentOptions.Center;
             loadTmp.color = new Color(1, 1, 1, 0.6f);
             
+            // ====== CONTROLS AREA (Bottom 30%) ======
+            var controlsPanel = new GameObject("ControlsPanel");
+            controlsPanel.transform.SetParent(videoOverlay.transform, false);
+            var controlsRT = controlsPanel.AddComponent<RectTransform>();
+            controlsRT.anchorMin = new Vector2(0, 0);
+            controlsRT.anchorMax = new Vector2(1, 0.22f); // reduced controls height
+            controlsRT.offsetMin = Vector2.zero;
+            controlsRT.offsetMax = Vector2.zero;
+            
+            // 1. Seekbar (Slider) - Above buttons
+            CreateSeekbar(controlsPanel.transform);
+            
+            // 2. Control Buttons - Bottom Row
+            float btnY = 100; // 100px from bottom edge
+            float btnSize = 90; // Larger buttons
+            float gap = 30;
+            
+            // Play/Pause (Center)
+            CreateControlButton(controlsPanel.transform, "PlayPause", "||", 
+                new Vector2(0.5f, 0), new Vector2(0.5f, 0),
+                new Vector2(0, btnY), new Vector2(btnSize, btnSize), OnPlayPause, out playPauseImg);
+                
+            // Backward -2s (Left of Play)
+            CreateControlButton(controlsPanel.transform, "BackBtn", "<<", 
+                new Vector2(0.5f, 0), new Vector2(0.5f, 0),
+                new Vector2(-(btnSize + gap), btnY), new Vector2(btnSize, btnSize), () => OnSkip(-2f));
+                
+            // Forward +2s (Right of Play)
+            CreateControlButton(controlsPanel.transform, "FwdBtn", ">>", 
+                new Vector2(0.5f, 0), new Vector2(0.5f, 0),
+                new Vector2(btnSize + gap, btnY), new Vector2(btnSize, btnSize), () => OnSkip(2f));
+                
+            // Speed Toggle (Bottom-Left)
+            var speedBtn = CreateControlButton(controlsPanel.transform, "SpeedBtn", "1.0x", 
+                new Vector2(0, 0), new Vector2(0, 0),
+                new Vector2(100, btnY), new Vector2(btnSize, btnSize), OnSpeedToggle);
+            speedText = speedBtn.GetComponentInChildren<TextMeshProUGUI>();
+            
+            // Close Button (Bottom-Right)
+            CreateControlButton(controlsPanel.transform, "CloseBtn", "X", 
+                new Vector2(1, 0), new Vector2(1, 0),
+                new Vector2(-100, btnY), new Vector2(btnSize, btnSize), CloseReplay);
+            
             videoOverlay.SetActive(false);
+        }
+        
+        private void CreateSeekbar(Transform parent)
+        {
+            var sliderGO = new GameObject("Seekbar");
+            sliderGO.transform.SetParent(parent, false);
+            
+            var rt = sliderGO.AddComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.1f, 0.8f);
+            rt.anchorMax = new Vector2(0.9f, 0.8f);
+            rt.sizeDelta = new Vector2(0, 40);
+            
+            seekSlider = sliderGO.AddComponent<Slider>();
+            seekSlider.direction = Slider.Direction.LeftToRight;
+            seekSlider.minValue = 0;
+            seekSlider.maxValue = 1;
+            seekSlider.onValueChanged.AddListener(OnSeek);
+            
+            // Background
+            var bgGO = new GameObject("Background");
+            bgGO.transform.SetParent(sliderGO.transform, false);
+            var bgRT = bgGO.AddComponent<RectTransform>();
+            bgRT.anchorMin = new Vector2(0, 0.25f);
+            bgRT.anchorMax = new Vector2(1, 0.75f);
+            bgRT.offsetMin = Vector2.zero;
+            bgRT.offsetMax = Vector2.zero;
+            var bgImg = bgGO.AddComponent<Image>();
+            bgImg.color = new Color(1, 1, 1, 0.2f);
+            seekSlider.targetGraphic = bgImg;
+            
+            // Fill Area
+            var fillArea = new GameObject("Fill Area");
+            fillArea.transform.SetParent(sliderGO.transform, false);
+            var fillAreaRT = fillArea.AddComponent<RectTransform>();
+            fillAreaRT.anchorMin = new Vector2(0, 0.25f);
+            fillAreaRT.anchorMax = new Vector2(1, 0.75f);
+            fillAreaRT.offsetMin = new Vector2(5, 0);
+            fillAreaRT.offsetMax = new Vector2(-5, 0);
+            
+            var fill = new GameObject("Fill");
+            fill.transform.SetParent(fillArea.transform, false);
+            var fillRT = fill.AddComponent<RectTransform>();
+            fillRT.sizeDelta = Vector2.zero;
+            var fillImg = fill.AddComponent<Image>();
+            fillImg.color = new Color(0.18f, 0.45f, 0.85f, 1f); // Blue fill
+            seekSlider.fillRect = fillRT;
+            
+            // Handle
+            var handleArea = new GameObject("Handle Slide Area");
+            handleArea.transform.SetParent(sliderGO.transform, false);
+            var handleAreaRT = handleArea.AddComponent<RectTransform>();
+            handleAreaRT.anchorMin = Vector2.zero;
+            handleAreaRT.anchorMax = Vector2.one;
+            handleAreaRT.offsetMin = new Vector2(10, 0);
+            handleAreaRT.offsetMax = new Vector2(-10, 0);
+            
+            var handle = new GameObject("Handle");
+            handle.transform.SetParent(handleArea.transform, false);
+            var handleRT = handle.AddComponent<RectTransform>();
+            handleRT.sizeDelta = new Vector2(40, 40);
+            var handleImg = handle.AddComponent<Image>();
+            handleImg.color = Color.white;
+            seekSlider.handleRect = handleRT;
+            
+            // Add Event Trigger for Dragging state
+            var entryDown = new UnityEngine.EventSystems.EventTrigger.Entry();
+            entryDown.eventID = UnityEngine.EventSystems.EventTriggerType.PointerDown;
+            entryDown.callback.AddListener((data) => { isDraggingSlider = true; });
+            
+            var entryUp = new UnityEngine.EventSystems.EventTrigger.Entry();
+            entryUp.eventID = UnityEngine.EventSystems.EventTriggerType.PointerUp;
+            entryUp.callback.AddListener((data) => { isDraggingSlider = false; });
+            
+            var trigger = sliderGO.AddComponent<UnityEngine.EventSystems.EventTrigger>();
+            trigger.triggers.Add(entryDown);
+            trigger.triggers.Add(entryUp);
+        }
+        
+        private GameObject CreateControlButton(Transform parent, string name, string text, 
+            Vector2 anchorMin, Vector2 anchorMax,
+            Vector2 pos, Vector2 size, UnityEngine.Events.UnityAction onClick, out Image iconImg)
+        {
+            var btnGO = CreateControlButton(parent, name, text, anchorMin, anchorMax, pos, size, onClick);
+            iconImg = btnGO.GetComponent<Image>();
+            return btnGO;
+        }
+
+        private GameObject CreateControlButton(Transform parent, string name, string text, 
+            Vector2 anchorMin, Vector2 anchorMax,
+            Vector2 pos, Vector2 size, UnityEngine.Events.UnityAction onClick)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            var rt = go.AddComponent<RectTransform>();
+            rt.anchorMin = anchorMin;
+            rt.anchorMax = anchorMax;
+            rt.anchoredPosition = pos;
+            rt.sizeDelta = size;
+            
+            var img = go.AddComponent<Image>();
+            img.color = new Color(0.25f, 0.25f, 0.3f, 1f);
+            
+            var btn = go.AddComponent<Button>();
+            btn.onClick.AddListener(onClick);
+            
+            var textGO = new GameObject("Text");
+            textGO.transform.SetParent(go.transform, false);
+            var textRT = textGO.AddComponent<RectTransform>();
+            textRT.anchorMin = Vector2.zero;
+            textRT.anchorMax = Vector2.one;
+            textRT.offsetMin = Vector2.zero;
+            textRT.offsetMax = Vector2.zero;
+            
+            var tmp = textGO.AddComponent<TextMeshProUGUI>();
+            tmp.text = text;
+            tmp.fontSize = 20;
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.color = Color.white;
+            tmp.fontStyle = FontStyles.Bold;
+            
+            return go;
+        }
+
+        private void Update()
+        {
+            // Sync slider with video time if not dragging
+            if (videoPlayer != null && videoPlayer.isPlaying && !isDraggingSlider && seekSlider != null && videoPlayer.length > 0)
+            {
+                seekSlider.value = (float)(videoPlayer.time / videoPlayer.length);
+            }
+        }
+        
+        // ====== CONTROL LOGIC ======
+        
+        private void OnSeek(float val)
+        {
+            if (videoPlayer != null && videoPlayer.isPrepared)
+            {
+                videoPlayer.time = val * videoPlayer.length;
+            }
+        }
+        
+        private void OnPlayPause()
+        {
+            if (videoPlayer == null) return;
+            
+            if (videoPlayer.isPlaying)
+            {
+                videoPlayer.Pause();
+                if (playPauseImg != null) playPauseImg.GetComponentInChildren<TextMeshProUGUI>().text = ">";
+            }
+            else
+            {
+                videoPlayer.Play();
+                if (playPauseImg != null) playPauseImg.GetComponentInChildren<TextMeshProUGUI>().text = "||";
+            }
+        }
+        
+        private void OnSkip(float seconds)
+        {
+            if (videoPlayer == null) return;
+            videoPlayer.time += seconds;
+        }
+        
+        private void OnSpeedToggle()
+        {
+            if (videoPlayer == null) return;
+            
+            if (currentSpeed >= 1.0f) currentSpeed = 0.5f;
+            else if (currentSpeed >= 0.5f) currentSpeed = 0.25f;
+            else currentSpeed = 1.0f;
+            
+            videoPlayer.playbackSpeed = currentSpeed;
+            if (speedText != null) speedText.text = $"{currentSpeed:0.0}x";
         }
         
         private void CreateOverlayLabel(Transform parent, string name, string text, int fontSize,
@@ -263,6 +461,9 @@ namespace ARBadmintonNet.Replay
             tmp.color = color;
             tmp.fontStyle = FontStyles.Bold;
         }
+        
+        // ... (rest of class)
+
         
         // ====== RECORD TOGGLE ======
         
@@ -323,6 +524,9 @@ namespace ARBadmintonNet.Replay
             // Do NOT disable the GameObject, otherwise VideoPlayer component is disabled too!
             // Just disable the RawImage component so it's invisible until ready
             if (videoDisplay != null) videoDisplay.enabled = false;
+            
+            // Ensure overlay is on top of everything
+            if (videoOverlay != null) videoOverlay.transform.SetAsLastSibling();
             
             replayManager.ExportReplay();
         }
