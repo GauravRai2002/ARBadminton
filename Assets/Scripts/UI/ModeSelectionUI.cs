@@ -95,6 +95,10 @@ namespace ARBadmintonNet.UI
                 courtPlacement.OnCourtLocked += () => { if (currentMode == AppMode.Court) scoreUI.Show(); };
                 courtPlacement.OnCourtUnlocked += () => { if (currentMode == AppMode.Court) scoreUI.Hide(); };
             }
+            if (scoreUI != null)
+            {
+                scoreUI.OnHomePressed += () => OnModeSwitchPressed();
+            }
         }
         
         private void SetupUI()
@@ -155,26 +159,26 @@ namespace ARBadmintonNet.UI
             CreateModeButton(startupPanel.transform, "NetModeBtn",
                 "[Net Mode]", "Place a virtual badminton net",
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0, 50), new Vector2(btnWidth, btnHeight),
+                new Vector2(0, 100), new Vector2(btnWidth, btnHeight),
                 () => SwitchToMode(AppMode.Net), netModeColor);
             
             CreateModeButton(startupPanel.transform, "CourtModeBtn",
                 "[Court Mode]", "Place court line markings",
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0, -90), new Vector2(btnWidth, btnHeight),
+                new Vector2(0, -100), new Vector2(btnWidth, btnHeight),
                 () => SwitchToMode(AppMode.Court), courtModeColor);
                 
             CreateModeButton(startupPanel.transform, "ScoreboardModeBtn",
                 "[Scoreboard]", "keep track of score only",
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0, -250), new Vector2(btnWidth, btnHeight),
+                new Vector2(0, -300), new Vector2(btnWidth, btnHeight),
                 () => SwitchToMode(AppMode.Scoreboard), new Color(0.3f, 0.3f, 0.4f, 0.85f));
             
             // Instruction
             CreateLabel(startupPanel.transform, "Instruction",
                 "You can switch modes anytime.", 18,
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0, -380), new Vector2(400, 35),
+                new Vector2(0, -420), new Vector2(400, 35),
                 new Color(1, 1, 1, 0.35f));
         }
         

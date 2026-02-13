@@ -158,9 +158,9 @@ namespace ARBadmintonNet.UI
                 new Vector2(rightX, bottomY - dpadBtnSize * 1.5f - gap), new Vector2(dpadBtnSize, 25));
             
             // === ROTATION (center, stacked) ===
-            float rotBtnW = 90f;
-            float rotBtnH = 50f;
-            float rotRowGap = 8f;
+            float rotBtnW = 110f;
+            float rotBtnH = 60f;
+            float rotRowGap = 25f;
             float rotBaseY = safeBottom + 15f;
             
             // Row 1: Spin (Y-axis)

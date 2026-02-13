@@ -20,6 +20,8 @@ namespace ARBadmintonNet.UI
         private int scoreP1 = 0;
         private int scoreP2 = 0;
         
+        public event UnityEngine.Events.UnityAction OnHomePressed;
+        
         // UI References for Resizing
         private GameObject panel;
         private RectTransform panelRT;
@@ -28,7 +30,7 @@ namespace ARBadmintonNet.UI
         private RectTransform containerP1, containerP2;
         private RectTransform btnPlusP1, btnMinusP1;
         private RectTransform btnPlusP2, btnMinusP2;
-        private RectTransform btnReset, btnSwap;
+        private RectTransform btnReset, btnSwap, btnHome;
         
         private void Start()
         {
@@ -99,26 +101,30 @@ namespace ARBadmintonNet.UI
                     300, 150);
                     
                 // Center Buttons (Reset/Swap)
-                // Put them in bottom center
+                // Reset Top, Swap Bottom
                 if (btnReset) 
                 {
-                    btnReset.anchoredPosition = new Vector2(0, 100);
+                    btnReset.anchorMin = new Vector2(0.5f, 0.5f);
+                    btnReset.anchorMax = new Vector2(0.5f, 0.5f);
+                    btnReset.anchoredPosition = new Vector2(0, 120);
                     btnReset.sizeDelta = new Vector2(200, 80);
                 }
                 if (btnSwap) 
                 {
-                    btnSwap.anchoredPosition = new Vector2(0, -100); 
-                    // Actually let's put Swap above Reset or side-by-side?
-                    // Let's keep vertical stack in center: Reset Top, Swap Bottom
-                    // Center of screen?
-                    btnReset.anchorMin = new Vector2(0.5f, 0.5f);
-                    btnReset.anchorMax = new Vector2(0.5f, 0.5f);
-                    btnReset.anchoredPosition = new Vector2(0, 80);
-                    
                     btnSwap.anchorMin = new Vector2(0.5f, 0.5f);
                     btnSwap.anchorMax = new Vector2(0.5f, 0.5f);
-                    btnSwap.anchoredPosition = new Vector2(0, -80);
+                    btnSwap.anchoredPosition = new Vector2(0, -20);
                     btnSwap.sizeDelta = new Vector2(200, 80);
+                }
+                
+                // HOME Button (Only in Fullscreen)
+                if (btnHome)
+                {
+                    btnHome.gameObject.SetActive(true);
+                    btnHome.anchorMin = new Vector2(0.5f, 0);
+                    btnHome.anchorMax = new Vector2(0.5f, 0);
+                    btnHome.anchoredPosition = new Vector2(0, 100);
+                    btnHome.sizeDelta = new Vector2(200, 60);
                 }
             }
             else
@@ -133,12 +139,6 @@ namespace ARBadmintonNet.UI
                 panel.GetComponent<Image>().color = overlayColor;
                 
                 // P1 (Left Side of Panel)
-                // We reset anchors to center-ish relative to panel size
-                // But CreatePlayerSection sets them to center... let's just use anchoredPosition
-                
-                // Hack: SetPlayerLayout assumes full-panel anchors for fullscreen.
-                // For mini, we want specific pos/size.
-                
                 SetPlayerLayoutMini(containerP1, scoreTextP1, btnPlusP1, btnMinusP1, new Vector2(-200, 0));
                 SetPlayerLayoutMini(containerP2, scoreTextP2, btnPlusP2, btnMinusP2, new Vector2(200, 0));
                 
@@ -156,6 +156,9 @@ namespace ARBadmintonNet.UI
                     btnSwap.anchoredPosition = new Vector2(0, -60);
                     btnSwap.sizeDelta = new Vector2(120, 60);
                 }
+                
+                // Hide Home button in Mini mode (we have the global one)
+                if (btnHome) btnHome.gameObject.SetActive(false);
             }
         }
         
@@ -278,6 +281,10 @@ namespace ARBadmintonNet.UI
             
             // Swap Button
             btnSwap = CreateCenterButton(parent, "SWAP", new Color(0.2f, 0.4f, 0.6f, 1f), SwapScores);
+            
+            // Home Button (Initially Hidden)
+            btnHome = CreateCenterButton(parent, "HOME", new Color(0.3f, 0.3f, 0.35f, 1f), () => OnHomePressed?.Invoke());
+            btnHome.gameObject.SetActive(false);
         }
         
         private RectTransform CreateCenterButton(Transform parent, string label, Color color, UnityEngine.Events.UnityAction action)
