@@ -43,6 +43,9 @@ namespace ARBadmintonNet.AR
         public delegate void NetRemovedHandler();
         public event NetRemovedHandler OnNetRemoved;
         
+        public event System.Action OnNetLocked;
+        public event System.Action OnNetUnlocked;
+        
         private void Awake()
         {
             if (arCamera == null)
@@ -210,6 +213,7 @@ namespace ARBadmintonNet.AR
         {
             netConfig.Lock();
             Debug.Log("Net locked in place");
+            OnNetLocked?.Invoke();
         }
         
         public void UnlockNet()
@@ -217,6 +221,7 @@ namespace ARBadmintonNet.AR
             netConfig.Unlock();
             // Stay in non-placement mode — net stays visible, just unlocked for adjustment
             Debug.Log("Net unlocked for adjustment");
+            OnNetUnlocked?.Invoke();
         }
         
         /// <summary>

@@ -20,8 +20,9 @@ namespace ARBadmintonNet.UI
         [SerializeField] private ARBadmintonNet.AR.ARSessionManager arSessionManager;
         [SerializeField] private ARBadmintonNet.Replay.ReplayManager replayManager;
         [SerializeField] private ARBadmintonNet.Replay.ReplayUI replayUI;
+        [SerializeField] private ScoreUI scoreUI;
         
-        public enum AppMode { None, Net, Court }
+        public enum AppMode { None, Net, Court, Scoreboard }
         
         private AppMode currentMode = AppMode.None;
         private Canvas canvas;
@@ -65,6 +66,14 @@ namespace ARBadmintonNet.UI
                 replayUI = go.AddComponent<ARBadmintonNet.Replay.ReplayUI>();
                 Debug.Log("[ModeSelection] Auto-created ReplayUI");
             }
+            if (scoreUI == null)
+                scoreUI = FindObjectOfType<ScoreUI>();
+            if (scoreUI == null)
+            {
+                var go = new GameObject("ScoreUI");
+                scoreUI = go.AddComponent<ScoreUI>();
+                Debug.Log("[ModeSelection] Auto-created ScoreUI");
+            }
         }
         
         private void Start()
@@ -75,6 +84,17 @@ namespace ARBadmintonNet.UI
             // Disable both modes initially
             SetNetActive(false);
             SetCourtActive(false);
+            // Register events
+            if (netPlacement != null)
+            {
+                netPlacement.OnNetLocked += () => { if (currentMode == AppMode.Net) scoreUI.Show(); };
+                netPlacement.OnNetUnlocked += () => { if (currentMode == AppMode.Net) scoreUI.Hide(); };
+            }
+            if (courtPlacement != null)
+            {
+                courtPlacement.OnCourtLocked += () => { if (currentMode == AppMode.Court) scoreUI.Show(); };
+                courtPlacement.OnCourtUnlocked += () => { if (currentMode == AppMode.Court) scoreUI.Hide(); };
+            }
         }
         
         private void SetupUI()
@@ -141,14 +161,20 @@ namespace ARBadmintonNet.UI
             CreateModeButton(startupPanel.transform, "CourtModeBtn",
                 "[Court Mode]", "Place court line markings",
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0, -130), new Vector2(btnWidth, btnHeight),
+                new Vector2(0, -90), new Vector2(btnWidth, btnHeight),
                 () => SwitchToMode(AppMode.Court), courtModeColor);
+                
+            CreateModeButton(startupPanel.transform, "ScoreboardModeBtn",
+                "[Scoreboard]", "keep track of score only",
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(0, -250), new Vector2(btnWidth, btnHeight),
+                () => SwitchToMode(AppMode.Scoreboard), new Color(0.3f, 0.3f, 0.4f, 0.85f));
             
             // Instruction
             CreateLabel(startupPanel.transform, "Instruction",
                 "You can switch modes anytime.", 18,
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0, -250), new Vector2(400, 35),
+                new Vector2(0, -380), new Vector2(400, 35),
                 new Color(1, 1, 1, 0.35f));
         }
         
@@ -160,7 +186,8 @@ namespace ARBadmintonNet.UI
             var rt = modeSwitchButton.AddComponent<RectTransform>();
             rt.anchorMin = new Vector2(1, 1);  // Top-right
             rt.anchorMax = new Vector2(1, 1);
-            rt.anchoredPosition = new Vector2(-20, -110);
+            rt.pivot = new Vector2(1, 1);      // Pivot top-right for easier positioning
+            rt.anchoredPosition = new Vector2(-50, -130); // "A lot" away from edge
             rt.sizeDelta = new Vector2(200, 50);
             
             var img = modeSwitchButton.AddComponent<Image>();
@@ -184,7 +211,7 @@ namespace ARBadmintonNet.UI
             textRT.offsetMax = Vector2.zero;
             
             var tmp = textGO.AddComponent<TextMeshProUGUI>();
-            tmp.text = "SWITCH";
+            tmp.text = "HOME";
             tmp.fontSize = 22;
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.color = Color.white;
@@ -286,18 +313,30 @@ namespace ARBadmintonNet.UI
         
         public void ShowStartupScreen()
         {
+            // Ensure AR is stopped at startup
+            if (arSessionManager != null)
+                arSessionManager.StopARSession();
+                
             if (startupPanel != null) startupPanel.SetActive(true);
             if (modeSwitchButton != null) modeSwitchButton.SetActive(false);
             
             // Hide replay controls when back at startup
             if (replayUI != null) replayUI.HideAll();
+            
+            // Hide scoring
+            if (scoreUI != null) scoreUI.Hide();
         }
         
         public void SwitchToMode(AppMode mode)
         {
-            // Start AR session when first mode is selected
+            // Start AR session ONLY for AR modes
             if (arSessionManager != null)
-                arSessionManager.StartARSession();
+            {
+                if (mode == AppMode.Net || mode == AppMode.Court)
+                    arSessionManager.StartARSession();
+                else
+                    arSessionManager.StopARSession();
+            }
             
             // Show replay record button (user controls when to start/stop)
             if (replayUI != null)
@@ -305,9 +344,31 @@ namespace ARBadmintonNet.UI
                 replayUI.ShowRecordButton();
                 Debug.Log("[ModeSelection] ShowRecordButton called on ReplayUI");
             }
-            else
             {
                 Debug.LogWarning("[ModeSelection] ReplayUI is null - cannot show record button!");
+            }
+            
+            // ScoreUI Visibility Logic
+            // Net/Court: Show ONLY if locked
+            // Scoreboard: Show immediately (Fullscreen)
+            if (scoreUI != null)
+            {
+                if (mode == AppMode.Scoreboard)
+                {
+                    scoreUI.SetLayout(true); // Fullscreen
+                    scoreUI.Show();
+                }
+                else 
+                {
+                    scoreUI.SetLayout(false); // Mini (Overlay)
+                    
+                    if (mode == AppMode.Net && netPlacement != null && netPlacement.IsNetLocked)
+                        scoreUI.Show(); // Show if already locked
+                    else if (mode == AppMode.Court && courtPlacement != null && courtPlacement.IsCourtLocked)
+                        scoreUI.Show();
+                    else
+                        scoreUI.Hide(); // Default hide for AR modes until locked
+                }
             }
             
             // Hide startup panel
@@ -338,14 +399,22 @@ namespace ARBadmintonNet.UI
                 SetCourtActive(false);
                 
                 // Update switch button text
-                UpdateSwitchButtonText("To Court Mode");
+                UpdateSwitchButtonText("HOME");
             }
             else if (mode == AppMode.Court)
             {
                 SetNetActive(false);
                 SetCourtActive(true);
                 
-                UpdateSwitchButtonText("To Net Mode");
+                UpdateSwitchButtonText("HOME");
+            }
+            else if (mode == AppMode.Scoreboard)
+            {
+                SetNetActive(false);
+                SetCourtActive(false);
+                // No AR active
+                
+                UpdateSwitchButtonText("HOME");
             }
             
             // Show the persistent mode switch button
@@ -356,18 +425,41 @@ namespace ARBadmintonNet.UI
         
         private void OnModeSwitchPressed()
         {
-            if (currentMode == AppMode.Net)
+            // Exit current mode and return to startup
+            
+            // 1. Reset Placements
+            if (netPlacement != null)
             {
-                SwitchToMode(AppMode.Court);
+                if (netPlacement.IsNetPlaced) netPlacement.RemoveNet();
+                netPlacement.DisablePlacementMode(); // Ensure it starts fresh next time
             }
-            else if (currentMode == AppMode.Court)
+            
+            if (courtPlacement != null)
             {
-                SwitchToMode(AppMode.Net);
+                if (courtPlacement.IsCourtPlaced) courtPlacement.RemoveCourt();
+                courtPlacement.DisablePlacementMode();
             }
-            else
+            
+            // 2. Reset Scoring
+            if (scoreUI != null)
             {
-                ShowStartupScreen();
+                scoreUI.ResetScores();
+                scoreUI.Hide(); // Ensure it's hidden explicitly
             }
+            
+            // 3. Reset Replay (Stop recording, delete clips)
+            if (replayUI != null)
+            {
+                replayUI.CloseReplay(); // Closes overlay, deletes clips
+                replayUI.HideAll();     // Stops recording, hides buttons
+            }
+            
+            // 4. Disable Managers
+            SetNetActive(false);
+            SetCourtActive(false);
+            
+            currentMode = AppMode.None;
+            ShowStartupScreen();
         }
         
         private void UpdateSwitchButtonText(string text)

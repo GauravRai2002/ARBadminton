@@ -34,6 +34,9 @@ namespace ARBadmintonNet.AR
         public delegate void CourtRemovedHandler();
         public event CourtRemovedHandler OnCourtRemoved;
         
+        public event System.Action OnCourtLocked;
+        public event System.Action OnCourtUnlocked;
+        
         private void Awake()
         {
             if (arCamera == null)
@@ -180,11 +183,13 @@ namespace ARBadmintonNet.AR
         public void LockCourt()
         {
             isLocked = true;
+            OnCourtLocked?.Invoke();
         }
         
         public void UnlockCourt()
         {
             isLocked = false;
+            OnCourtUnlocked?.Invoke();
         }
         
         public void MoveCourt(Vector3 delta)

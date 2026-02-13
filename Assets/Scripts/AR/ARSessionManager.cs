@@ -26,6 +26,10 @@ namespace ARBadmintonNet.AR
             
             if (arSession == null)
                 Debug.LogError("ARSessionManager: No ARSession found in scene!");
+            
+            // Force disable at startup to prevent camera usage until mode selection
+            if (arSession != null)
+                arSession.enabled = false;
         }
         
         private void Start()
@@ -43,10 +47,9 @@ namespace ARBadmintonNet.AR
         
         public void StartARSession()
         {
-            if (ARSession.state == ARSessionState.None || 
-                ARSession.state == ARSessionState.SessionInitializing)
+            Debug.Log($"Starting AR Session... (Current State: {ARSession.state})");
+            if (arSession != null)
             {
-                Debug.Log("Starting AR Session...");
                 arSession.enabled = true;
                 IsSessionActive = true;
             }
