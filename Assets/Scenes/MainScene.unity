@@ -1286,6 +1286,7 @@ MonoBehaviour:
   motionThreshold: 30
   minMotionPixels: 50
   maxMotionPixels: 5000
+  maxBoundingBoxCoverage: 0.4
   detectionFrameSkip: 3
   downscaleFactor: 8
   estimatedDepth: 3
@@ -1340,7 +1341,6 @@ MonoBehaviour:
   planeManager: {fileID: 0}
   detectionMode: 3
   minPlaneSize: 0.5
-
 --- !u!114 &2131870693
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1356,7 +1356,6 @@ MonoBehaviour:
   arSession: {fileID: 313084772}
   planeManager: {fileID: 1675050397}
   autoStartSession: 1
-
 --- !u!114 &2131870695
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1391,15 +1390,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1660057539 &9223372036854775807
-SceneRoots:
-  m_ObjectHideFlags: 0
-  m_Roots:
-  - {fileID: 1675050396}
-  - {fileID: 313084773}
-  - {fileID: 2131870696}
-  - {fileID: 465376090}
-  - {fileID: 191473897}
 --- !u!114 &2131870697
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1412,6 +1402,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ARBadmintonNet.UI.NetPlacementUI
+  netPlacement: {fileID: 0}
+  moveStep: 0.1
+  rotateStep: 15
+  heightStep: 0.05
 --- !u!114 &2131870698
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1427,6 +1421,7 @@ MonoBehaviour:
   arCamera: {fileID: 1723368626}
   raycastManager: {fileID: 1675050395}
   courtPrefab: {fileID: 1000000000000000001, guid: b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4, type: 3}
+  netPrefab: {fileID: 9152853955091635325, guid: a20c0343a30cc4c80ab04209b8bac668, type: 3}
 --- !u!114 &2131870699
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1439,6 +1434,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4acb99c15db8c45e9a855d3c56cfc26a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ARBadmintonNet.UI.CourtPlacementUI
+  courtPlacement: {fileID: 0}
+  moveStep: 0.1
+  rotateStep: 5
 --- !u!114 &2131870700
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1451,3 +1449,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ARBadmintonNet.UI.ModeSelectionUI
+  netPlacement: {fileID: 0}
+  courtPlacement: {fileID: 0}
+  netUI: {fileID: 0}
+  courtUI: {fileID: 0}
+  motionTracker: {fileID: 0}
+--- !u!1660057539 &9223372036854775807
+SceneRoots:
+  m_ObjectHideFlags: 0
+  m_Roots:
+  - {fileID: 1675050396}
+  - {fileID: 313084773}
+  - {fileID: 2131870696}
+  - {fileID: 465376090}
+  - {fileID: 191473897}

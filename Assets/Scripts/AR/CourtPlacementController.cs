@@ -13,8 +13,10 @@ namespace ARBadmintonNet.AR
         [SerializeField] private Camera arCamera;
         [SerializeField] private ARRaycastManager raycastManager;
         [SerializeField] private GameObject courtPrefab;
+        [SerializeField] private GameObject netPrefab;
         
         private GameObject courtInstance;
+        private GameObject netChild;
         private bool isPlacementMode = true;
         
         // Store the placed world position
@@ -120,6 +122,39 @@ namespace ARBadmintonNet.AR
             courtInstance.transform.position = position;
             courtInstance.transform.rotation = rotation;
             
+            // Instantiate net as child of court
+            Debug.Log($"[CourtPlacement] Attempting to attach net. netPrefab is: {(netPrefab != null ? "ASSIGNED" : "NULL/NOT ASSIGNED")}");
+            
+            if (netPrefab != null)
+            {
+                Debug.Log($"[CourtPlacement] Instantiating net prefab: {netPrefab.name}");
+                netChild = Instantiate(netPrefab, courtInstance.transform);
+                
+                Debug.Log($"[CourtPlacement] Net instantiated: {(netChild != null ? "SUCCESS" : "FAILED")}");
+                
+                if (netChild != null)
+                {
+                    // Position net at center of court (local space)
+                    // Net height is 1.55m, so we position it at 0.775m (half height) above ground
+                    netChild.transform.localPosition = new Vector3(0, 0.775f, 0);
+                    netChild.transform.localRotation = Quaternion.identity;
+                    
+                    // Scale net to match court width
+                    // Net default width is 5.18m (singles), court doubles width is 6.10m
+                    // Scale factor: 6.10 / 5.18 = 1.178
+                    float courtDoublesWidth = 6.10f; // BWF standard doubles width
+                    float netDefaultWidth = 5.18f;   // Net's default width (singles)
+                    float scaleX = courtDoublesWidth / netDefaultWidth;
+                    netChild.transform.localScale = new Vector3(scaleX, 1f, 1f);
+                    
+                    Debug.Log($"[CourtPlacement] Net attached to court at center. Active: {netChild.activeSelf}, Position: {netChild.transform.position}, Scale: {netChild.transform.localScale}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[CourtPlacement] ⚠️ NET PREFAB NOT ASSIGNED! Go to Inspector and assign the BadmintonNet prefab to the 'Net Prefab' field.");
+            }
+            
             hasPlacedCourt = true;
             isPlacementMode = false;
             
@@ -186,6 +221,14 @@ namespace ARBadmintonNet.AR
         public GameObject GetCourtInstance()
         {
             return courtInstance;
+        }
+        
+        /// <summary>
+        /// Get the net instance that is attached to the court
+        /// </summary>
+        public GameObject GetNetInstance()
+        {
+            return netChild;
         }
         
         /// <summary>

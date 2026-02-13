@@ -17,9 +17,9 @@ namespace ARBadmintonNet.AR
         
         [Header("Grid Settings")]
         [SerializeField] private float gridSpacing = 0.08f;  // 8cm between strings
-        [SerializeField] private float stringThickness = 0.020f; // 20mm thick strings (highly visible)
+        [SerializeField] private float stringThickness = 0.04f; // 40mm - matches court line width
         [SerializeField] private float topBorderHeight = 0.05f;  // 5cm top tape
-        [SerializeField] private float sideBorderWidth = 0.02f;  // 2cm side borders
+        [SerializeField] private float sideBorderWidth = 0.04f;  // 40mm - matches court line width
         
         [Header("Appearance")]
         [SerializeField] private Color netColor = new Color(0.95f, 0.95f, 0.9f, 0.9f); // Off-white
@@ -60,7 +60,7 @@ namespace ARBadmintonNet.AR
             // -height/2 to +height/2 on Y, flat on Z
             float halfWidth = netWidth / 2f;
             float halfHeight = netHeight / 2f;
-            float depth = 0.030f; // 30mm depth for maximum visibility from side/top angles
+            float depth = 0.04f; // 40mm depth - matches court line width for visual cohesion
             
             // === HORIZONTAL STRINGS ===
             for (int i = 0; i <= horizontalLines; i++)
