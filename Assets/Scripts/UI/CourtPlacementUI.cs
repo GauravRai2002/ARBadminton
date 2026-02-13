@@ -6,7 +6,6 @@ namespace ARBadmintonNet.UI
 {
     /// <summary>
     /// Creates and manages placement adjustment UI for the badminton court markings.
-    /// Shows directional buttons + Y rotation + lock/reset after court is placed.
     /// Court only needs Y-axis rotation (flat on ground) and XZ movement.
     /// </summary>
     public class CourtPlacementUI : MonoBehaviour
@@ -16,23 +15,26 @@ namespace ARBadmintonNet.UI
         
         [Header("Movement Settings")]
         [SerializeField] private float moveStep = 0.1f;
-        [SerializeField] private float rotateStep = 5f; // smaller for precision alignment
+        [SerializeField] private float rotateStep = 5f;
         
         private Canvas canvas;
         private GameObject adjustmentPanel;
         private GameObject lockedPanel;
         private bool isSetup = false;
         
-        private static readonly float largeBtnSize = 130f;
-        private static readonly float mediumBtnSize = 110f;
-        private static readonly float gap = 15f;
+        // ====== UNIFIED DESIGN SYSTEM (matches NetPlacementUI) ======
+        private static readonly Color btnColor = new Color(0.12f, 0.12f, 0.18f, 0.85f);
+        private static readonly Color btnHighlight = new Color(0.22f, 0.22f, 0.28f, 0.9f);
+        private static readonly Color lockColor = new Color(0.15f, 0.65f, 0.35f, 0.85f);
+        private static readonly Color resetColor = new Color(0.75f, 0.22f, 0.22f, 0.85f);
+        private static readonly Color unlockColor = new Color(0.85f, 0.55f, 0.15f, 0.85f);
+        private static readonly Color rotColor = new Color(0.3f, 0.75f, 0.4f, 0.85f);
         
-        private static readonly Color btnColor = new Color(0.15f, 0.15f, 0.15f, 0.9f);
-        private static readonly Color btnHighlight = new Color(0.3f, 0.3f, 0.3f, 0.95f);
-        private static readonly Color lockColor = new Color(0.1f, 0.7f, 0.2f, 0.95f);
-        private static readonly Color resetColor = new Color(0.8f, 0.2f, 0.2f, 0.95f);
-        private static readonly Color unlockColor = new Color(0.9f, 0.6f, 0.1f, 0.95f);
-        private static readonly Color rotYColor = new Color(0.3f, 0.9f, 0.3f, 0.9f);
+        private static readonly float dpadBtnSize = 100f;
+        private static readonly float gap = 12f;
+        private static readonly float safeTop = 110f;
+        private static readonly float safeBottom = 90f;
+        private static readonly float safeSide = 25f;
         
         private void Awake()
         {
@@ -63,15 +65,8 @@ namespace ARBadmintonNet.UI
             }
         }
         
-        private void OnCourtPlaced(Vector3 pos, Quaternion rot)
-        {
-            ShowAdjustmentUI();
-        }
-        
-        private void OnCourtRemoved()
-        {
-            HideAllUI();
-        }
+        private void OnCourtPlaced(Vector3 pos, Quaternion rot) => ShowAdjustmentUI();
+        private void OnCourtRemoved() => HideAllUI();
         
         private void SetupUI()
         {
@@ -106,87 +101,81 @@ namespace ARBadmintonNet.UI
             rt.offsetMin = Vector2.zero;
             rt.offsetMax = Vector2.zero;
             
-            float safeLeftPadding = 80f;
-            float safeRightPadding = 80f;
-            float safeTopPadding = 130f; // Increased for Dynamic Island
-            float safeBottomPadding = 100f;
-            
-            // === INSTRUCTION TEXT ===
+            // === INSTRUCTION ===
             CreateLabel(adjustmentPanel.transform, "InstructionLabel",
-                "Position the Court", 28,
+                "🎯 Position the Court", 26,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0, -(30 + safeTopPadding)), new Vector2(500, 50));
+                new Vector2(0, -(safeTop + 20)), new Vector2(400, 45));
             
-            // === MOVEMENT D-PAD (bottom-left) ===
-            float dpadX = 140f + safeLeftPadding;
-            float dpadY = 220f + safeBottomPadding;
+            // === D-PAD (bottom-left) ===
+            float leftX = safeSide + dpadBtnSize * 1.5f;
+            float bottomY = safeBottom + dpadBtnSize * 2f;
             
             CreateButton(adjustmentPanel.transform, "ForwardBtn", "▲",
                 new Vector2(0, 0), new Vector2(0, 0),
-                new Vector2(dpadX, dpadY + largeBtnSize + gap), new Vector2(largeBtnSize, largeBtnSize),
-                () => MoveCourt(GetForwardDir()), btnColor, 36);
+                new Vector2(leftX, bottomY + dpadBtnSize + gap), new Vector2(dpadBtnSize, dpadBtnSize),
+                () => MoveCourt(GetForwardDir()), btnColor, 32);
             
             CreateButton(adjustmentPanel.transform, "BackBtn", "▼",
                 new Vector2(0, 0), new Vector2(0, 0),
-                new Vector2(dpadX, dpadY - largeBtnSize - gap), new Vector2(largeBtnSize, largeBtnSize),
-                () => MoveCourt(-GetForwardDir()), btnColor, 36);
+                new Vector2(leftX, bottomY - dpadBtnSize - gap), new Vector2(dpadBtnSize, dpadBtnSize),
+                () => MoveCourt(-GetForwardDir()), btnColor, 32);
             
             CreateButton(adjustmentPanel.transform, "LeftBtn", "◀",
                 new Vector2(0, 0), new Vector2(0, 0),
-                new Vector2(dpadX - largeBtnSize - gap, dpadY), new Vector2(largeBtnSize, largeBtnSize),
-                () => MoveCourt(-GetRightDir()), btnColor, 36);
+                new Vector2(leftX - dpadBtnSize - gap, bottomY), new Vector2(dpadBtnSize, dpadBtnSize),
+                () => MoveCourt(-GetRightDir()), btnColor, 32);
             
             CreateButton(adjustmentPanel.transform, "RightBtn", "▶",
                 new Vector2(0, 0), new Vector2(0, 0),
-                new Vector2(dpadX + largeBtnSize + gap, dpadY), new Vector2(largeBtnSize, largeBtnSize),
-                () => MoveCourt(GetRightDir()), btnColor, 36);
+                new Vector2(leftX + dpadBtnSize + gap, bottomY), new Vector2(dpadBtnSize, dpadBtnSize),
+                () => MoveCourt(GetRightDir()), btnColor, 32);
             
-            CreateLabel(adjustmentPanel.transform, "MoveLabel",
-                "MOVE", 14,
+            CreateLabel(adjustmentPanel.transform, "MoveLabel", "MOVE", 16,
                 new Vector2(0, 0), new Vector2(0, 0),
-                new Vector2(dpadX, dpadY), new Vector2(largeBtnSize, largeBtnSize));
+                new Vector2(leftX, bottomY), new Vector2(dpadBtnSize, dpadBtnSize));
             
-            // === Y-AXIS ROTATION ONLY (court is flat on ground) ===
-            // Anchor to Bottom-Right (1,0)
-            float rotX = -(140f + safeRightPadding);
+            // === ROTATION (bottom-right, Y-axis only for court) ===
+            float rightX = -safeSide - dpadBtnSize;
             
-            CreateLabel(adjustmentPanel.transform, "RotLabel",
-                "ROTATE", 14,
+            CreateLabel(adjustmentPanel.transform, "RotLabel", "↔ Rotate", 16,
                 new Vector2(1, 0), new Vector2(1, 0),
-                new Vector2(rotX, dpadY), new Vector2(largeBtnSize, largeBtnSize));
+                new Vector2(rightX, bottomY + dpadBtnSize + gap + 30), new Vector2(200, 25));
             
-            CreateButton(adjustmentPanel.transform, "RotLeftBtn", "↺",
+            // Coarse rotation
+            CreateButton(adjustmentPanel.transform, "RotL", "↺ 5°",
                 new Vector2(1, 0), new Vector2(1, 0),
-                new Vector2(rotX - 60f, dpadY + largeBtnSize + gap), new Vector2(mediumBtnSize, mediumBtnSize),
-                () => RotateCourt(-rotateStep), rotYColor, 32);
+                new Vector2(rightX - 55, bottomY + dpadBtnSize / 2 + gap), new Vector2(dpadBtnSize, dpadBtnSize),
+                () => RotateCourt(-rotateStep), rotColor, 22);
             
-            CreateButton(adjustmentPanel.transform, "RotRightBtn", "↻",
+            CreateButton(adjustmentPanel.transform, "RotR", "↻ 5°",
                 new Vector2(1, 0), new Vector2(1, 0),
-                new Vector2(rotX + 60f, dpadY + largeBtnSize + gap), new Vector2(mediumBtnSize, mediumBtnSize),
-                () => RotateCourt(rotateStep), rotYColor, 32);
+                new Vector2(rightX + 55, bottomY + dpadBtnSize / 2 + gap), new Vector2(dpadBtnSize, dpadBtnSize),
+                () => RotateCourt(rotateStep), rotColor, 22);
             
             // Fine rotation (1 degree)
-            CreateButton(adjustmentPanel.transform, "RotLeftFineBtn", "↺ 1°",
+            CreateButton(adjustmentPanel.transform, "RotLFine", "↺ 1°",
                 new Vector2(1, 0), new Vector2(1, 0),
-                new Vector2(rotX - 60f, dpadY - largeBtnSize - gap), new Vector2(mediumBtnSize, mediumBtnSize),
-                () => RotateCourt(-1f), btnColor, 20);
+                new Vector2(rightX - 55, bottomY - dpadBtnSize / 2 - gap), new Vector2(dpadBtnSize, dpadBtnSize),
+                () => RotateCourt(-1f), btnColor, 22);
             
-            CreateButton(adjustmentPanel.transform, "RotRightFineBtn", "↻ 1°",
+            CreateButton(adjustmentPanel.transform, "RotRFine", "↻ 1°",
                 new Vector2(1, 0), new Vector2(1, 0),
-                new Vector2(rotX + 60f, dpadY - largeBtnSize - gap), new Vector2(mediumBtnSize, mediumBtnSize),
-                () => RotateCourt(1f), btnColor, 20);
+                new Vector2(rightX + 55, bottomY - dpadBtnSize / 2 - gap), new Vector2(dpadBtnSize, dpadBtnSize),
+                () => RotateCourt(1f), btnColor, 22);
             
-            // === LOCK BUTTON ===
-            CreateButton(adjustmentPanel.transform, "LockBtn", "✓  Lock Court",
+            // === LOCK & RESET (side by side) ===
+            float actionY = safeBottom + dpadBtnSize * 3.5f;
+            
+            CreateButton(adjustmentPanel.transform, "LockBtn", "✓ Lock",
                 new Vector2(0.5f, 0), new Vector2(0.5f, 0),
-                new Vector2(0, 60 + safeBottomPadding), new Vector2(250, 65),
-                OnLockPressed, lockColor, 24);
+                new Vector2(-110, actionY), new Vector2(200, 55),
+                OnLockPressed, lockColor, 22);
             
-            // === RESET BUTTON ===
             CreateButton(adjustmentPanel.transform, "ResetBtn", "✗ Reset",
-                new Vector2(1, 1), new Vector2(1, 1),
-                new Vector2(-(120 + safeRightPadding), -(60 + safeTopPadding)), new Vector2(200, 70),
-                OnResetPressed, resetColor, 28);
+                new Vector2(0.5f, 0), new Vector2(0.5f, 0),
+                new Vector2(110, actionY), new Vector2(200, 55),
+                OnResetPressed, resetColor, 22);
         }
         
         private void CreateLockedPanel()
@@ -200,24 +189,29 @@ namespace ARBadmintonNet.UI
             rt.offsetMin = Vector2.zero;
             rt.offsetMax = Vector2.zero;
             
-            float safeLeftPadding = 60f;
-            float safeRightPadding = 60f;
-            float safeBottomPadding = 80f;
+            // Locked status text
+            CreateLabel(lockedPanel.transform, "LockedLabel",
+                "🔒 Court Locked", 24,
+                new Vector2(0.5f, 1), new Vector2(0.5f, 1),
+                new Vector2(0, -(safeTop + 20)), new Vector2(300, 40));
             
-            CreateButton(lockedPanel.transform, "UnlockBtn", "Adjust Court",
-                new Vector2(1, 0), new Vector2(1, 0),
-                new Vector2(-(100 + safeRightPadding), 50 + safeBottomPadding), new Vector2(180, 55),
-                OnUnlockPressed, unlockColor, 20);
+            // Unlock + Reset side by side at bottom
+            CreateButton(lockedPanel.transform, "UnlockBtn", "🔓 Adjust",
+                new Vector2(0.5f, 0), new Vector2(0.5f, 0),
+                new Vector2(-110, safeBottom + 30), new Vector2(200, 55),
+                OnUnlockPressed, unlockColor, 22);
             
             CreateButton(lockedPanel.transform, "ResetBtn2", "✗ Reset",
-                new Vector2(0, 0), new Vector2(0, 0),
-                new Vector2(100 + safeLeftPadding, 50 + safeBottomPadding), new Vector2(160, 55),
-                OnResetPressed, resetColor, 20);
+                new Vector2(0.5f, 0), new Vector2(0.5f, 0),
+                new Vector2(110, safeBottom + 30), new Vector2(200, 55),
+                OnResetPressed, resetColor, 22);
         }
+        
+        // ====== BUTTON & LABEL CREATORS ======
         
         private GameObject CreateButton(Transform parent, string name, string text,
             Vector2 anchorMin, Vector2 anchorMax, Vector2 position, Vector2 size,
-            UnityEngine.Events.UnityAction onClick, Color bgColor, int fontSize = 32)
+            UnityEngine.Events.UnityAction onClick, Color bgColor, int fontSize = 28)
         {
             var btnGO = new GameObject(name);
             btnGO.transform.SetParent(parent, false);
@@ -236,9 +230,9 @@ namespace ARBadmintonNet.UI
             colors.normalColor = bgColor;
             colors.highlightedColor = btnHighlight;
             colors.pressedColor = new Color(
-                Mathf.Min(bgColor.r + 0.3f, 1f),
-                Mathf.Min(bgColor.g + 0.3f, 1f),
-                Mathf.Min(bgColor.b + 0.3f, 1f),
+                Mathf.Min(bgColor.r + 0.2f, 1f),
+                Mathf.Min(bgColor.g + 0.2f, 1f),
+                Mathf.Min(bgColor.b + 0.2f, 1f),
                 bgColor.a);
             btn.colors = colors;
             btn.onClick.AddListener(onClick);
@@ -278,11 +272,13 @@ namespace ARBadmintonNet.UI
             tmp.text = text;
             tmp.fontSize = fontSize;
             tmp.alignment = TextAlignmentOptions.Center;
-            tmp.color = new Color(1f, 1f, 1f, 0.85f);
+            tmp.color = new Color(1f, 1f, 1f, 0.7f);
             tmp.fontStyle = FontStyles.Bold;
             
             return labelGO;
         }
+        
+        // ====== MOVEMENT ACTIONS ======
         
         private Vector3 GetForwardDir()
         {
@@ -338,6 +334,8 @@ namespace ARBadmintonNet.UI
                 HideAllUI();
             }
         }
+        
+        // ====== UI STATE ======
         
         public void ShowAdjustmentUI()
         {

@@ -18,6 +18,8 @@ namespace ARBadmintonNet.UI
         [SerializeField] private CourtPlacementUI courtUI;
         [SerializeField] private ARBadmintonNet.Detection.MotionBasedTracker motionTracker;
         [SerializeField] private ARBadmintonNet.AR.ARSessionManager arSessionManager;
+        [SerializeField] private ARBadmintonNet.Replay.ReplayManager replayManager;
+        [SerializeField] private ARBadmintonNet.Replay.ReplayUI replayUI;
         
         public enum AppMode { None, Net, Court }
         
@@ -27,9 +29,9 @@ namespace ARBadmintonNet.UI
         private GameObject modeSwitchButton;
         private bool isSetup = false;
         
-        private static readonly Color netModeColor = new Color(0.2f, 0.5f, 0.9f, 0.95f);
-        private static readonly Color courtModeColor = new Color(0.2f, 0.8f, 0.4f, 0.95f);
-        private static readonly Color switchBtnColor = new Color(0.6f, 0.3f, 0.8f, 0.9f);
+        private static readonly Color netModeColor = new Color(0.18f, 0.45f, 0.85f, 0.85f);
+        private static readonly Color courtModeColor = new Color(0.15f, 0.65f, 0.35f, 0.85f);
+        private static readonly Color switchBtnColor = new Color(0.12f, 0.12f, 0.18f, 0.85f);
         
         public AppMode CurrentMode => currentMode;
         
@@ -47,6 +49,10 @@ namespace ARBadmintonNet.UI
                 motionTracker = FindObjectOfType<ARBadmintonNet.Detection.MotionBasedTracker>();
             if (arSessionManager == null)
                 arSessionManager = FindObjectOfType<ARBadmintonNet.AR.ARSessionManager>();
+            if (replayManager == null)
+                replayManager = FindObjectOfType<ARBadmintonNet.Replay.ReplayManager>();
+            if (replayUI == null)
+                replayUI = FindObjectOfType<ARBadmintonNet.Replay.ReplayUI>();
         }
         
         private void Start()
@@ -92,47 +98,46 @@ namespace ARBadmintonNet.UI
             rt.offsetMin = Vector2.zero;
             rt.offsetMax = Vector2.zero;
             
-            // Solid dark background — hides camera feed until mode is selected
+            // Solid dark background — matches app palette
             var bg = startupPanel.AddComponent<Image>();
-            bg.color = new Color(0.08f, 0.08f, 0.12f, 1f);
+            bg.color = new Color(0.06f, 0.06f, 0.1f, 1f);
             
             // Title
             CreateLabel(startupPanel.transform, "Title",
-                "AR Badminton", 56,
+                "🏸 AR Badminton", 52,
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0, 280), new Vector2(600, 90),
+                new Vector2(0, 280), new Vector2(600, 80),
                 Color.white);
             
             // Subtitle
             CreateLabel(startupPanel.transform, "Subtitle",
-                "Choose a placement mode", 28,
+                "Choose a mode to get started", 24,
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0, 200), new Vector2(500, 50),
-                new Color(1, 1, 1, 0.6f));
+                new Vector2(0, 210), new Vector2(500, 40),
+                new Color(1, 1, 1, 0.5f));
             
-            // Net Mode button — large with generous spacing
-            float btnWidth = 700f;
-            float btnHeight = 180f;
+            // Mode buttons
+            float btnWidth = 650f;
+            float btnHeight = 150f;
             
             CreateModeButton(startupPanel.transform, "NetModeBtn",
-                "🏸  Net Mode", "Place a badminton net for collision detection",
+                "🏸  Net Mode", "Place a virtual badminton net",
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0, 60), new Vector2(btnWidth, btnHeight),
+                new Vector2(0, 50), new Vector2(btnWidth, btnHeight),
                 () => SwitchToMode(AppMode.Net), netModeColor);
             
-            // Court Mode button
             CreateModeButton(startupPanel.transform, "CourtModeBtn",
-                "📐  Court Mode", "Place court line markings for practice",
+                "📐  Court Mode", "Place court line markings",
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0, -160), new Vector2(btnWidth, btnHeight),
+                new Vector2(0, -130), new Vector2(btnWidth, btnHeight),
                 () => SwitchToMode(AppMode.Court), courtModeColor);
             
             // Instruction
             CreateLabel(startupPanel.transform, "Instruction",
-                "Tap to begin. You can switch modes anytime.", 20,
+                "You can switch modes anytime.", 18,
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0, -290), new Vector2(500, 40),
-                new Color(1, 1, 1, 0.4f));
+                new Vector2(0, -250), new Vector2(400, 35),
+                new Color(1, 1, 1, 0.35f));
         }
         
         private void CreateModeSwitchButton()
@@ -143,8 +148,8 @@ namespace ARBadmintonNet.UI
             var rt = modeSwitchButton.AddComponent<RectTransform>();
             rt.anchorMin = new Vector2(1, 1);  // Top-right
             rt.anchorMax = new Vector2(1, 1);
-            rt.anchoredPosition = new Vector2(-30, -100); // 30px from right, 100px from top (safe area)
-            rt.sizeDelta = new Vector2(240, 60);
+            rt.anchoredPosition = new Vector2(-20, -110);
+            rt.sizeDelta = new Vector2(200, 50);
             
             var img = modeSwitchButton.AddComponent<Image>();
             img.color = switchBtnColor;
@@ -216,12 +221,12 @@ namespace ARBadmintonNet.UI
             var titleRT = titleGO.AddComponent<RectTransform>();
             titleRT.anchorMin = new Vector2(0, 0.5f);
             titleRT.anchorMax = new Vector2(1, 1);
-            titleRT.offsetMin = new Vector2(15, 0);
-            titleRT.offsetMax = new Vector2(-15, -5);
+            titleRT.offsetMin = new Vector2(30, 0);
+            titleRT.offsetMax = new Vector2(-30, -5);
             
             var titleTmp = titleGO.AddComponent<TextMeshProUGUI>();
             titleTmp.text = title;
-            titleTmp.fontSize = 36;
+            titleTmp.fontSize = 32;
             titleTmp.alignment = TextAlignmentOptions.MidlineLeft;
             titleTmp.color = Color.white;
             titleTmp.fontStyle = FontStyles.Bold;
@@ -233,14 +238,14 @@ namespace ARBadmintonNet.UI
             var descRT = descGO.AddComponent<RectTransform>();
             descRT.anchorMin = new Vector2(0, 0);
             descRT.anchorMax = new Vector2(1, 0.5f);
-            descRT.offsetMin = new Vector2(15, 5);
-            descRT.offsetMax = new Vector2(-15, 0);
+            descRT.offsetMin = new Vector2(30, 10);
+            descRT.offsetMax = new Vector2(-30, 0);
             
             var descTmp = descGO.AddComponent<TextMeshProUGUI>();
             descTmp.text = description;
-            descTmp.fontSize = 20;
+            descTmp.fontSize = 18;
             descTmp.alignment = TextAlignmentOptions.TopLeft;
-            descTmp.color = new Color(1, 1, 1, 0.75f);
+            descTmp.color = new Color(1, 1, 1, 0.6f);
         }
         
         private GameObject CreateLabel(Transform parent, string name, string text, int fontSize,
@@ -271,6 +276,10 @@ namespace ARBadmintonNet.UI
         {
             if (startupPanel != null) startupPanel.SetActive(true);
             if (modeSwitchButton != null) modeSwitchButton.SetActive(false);
+            
+            // Stop replay buffering when back at startup
+            if (replayManager != null) replayManager.StopBuffering();
+            if (replayUI != null) replayUI.HideReplayButton();
         }
         
         public void SwitchToMode(AppMode mode)
@@ -278,6 +287,10 @@ namespace ARBadmintonNet.UI
             // Start AR session when first mode is selected
             if (arSessionManager != null)
                 arSessionManager.StartARSession();
+            
+            // Start replay buffering
+            if (replayManager != null) replayManager.StartBuffering();
+            if (replayUI != null) replayUI.ShowReplayButton();
             
             // Hide startup panel
             if (startupPanel != null) startupPanel.SetActive(false);
