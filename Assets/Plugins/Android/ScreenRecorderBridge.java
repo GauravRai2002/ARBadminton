@@ -171,7 +171,16 @@ public class ScreenRecorderBridge {
             return;
         }
 
-        startBufferingInternal();
+        // Permission already granted (second+ start) — need to start foreground service
+        // first
+        Log.d(TAG, "Permission already granted, starting foreground service and buffering");
+        startForegroundService();
+        mainHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                startBufferingInternal();
+            }
+        }, 500);
     }
 
     private void startBufferingInternal() {
