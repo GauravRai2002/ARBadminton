@@ -7,7 +7,8 @@ using System.Collections;
 namespace ARBadmintonNet.Replay
 {
     /// <summary>
-    /// UI for instant replay: a replay button and fullscreen video playback overlay.
+    /// UI for instant replay with manual record control.
+    /// Shows a record toggle button and a replay button when recording.
     /// </summary>
     public class ReplayUI : MonoBehaviour
     {
@@ -15,6 +16,9 @@ namespace ARBadmintonNet.Replay
         [SerializeField] private ReplayManager replayManager;
         
         private Canvas canvas;
+        private GameObject recordButton;
+        private TextMeshProUGUI recordBtnText;
+        private Image recordBtnImage;
         private GameObject replayButton;
         private GameObject videoOverlay;
         private VideoPlayer videoPlayer;
@@ -23,9 +27,12 @@ namespace ARBadmintonNet.Replay
         private GameObject loadingIndicator;
         private string currentClipPath;
         private bool isSetup = false;
+        private bool isRecording = false;
         
-        // Unified color palette
-        private static readonly Color replayBtnColor = new Color(0.85f, 0.25f, 0.25f, 0.85f);
+        // Colors
+        private static readonly Color recordOffColor = new Color(0.12f, 0.12f, 0.18f, 0.85f);
+        private static readonly Color recordOnColor = new Color(0.85f, 0.2f, 0.2f, 0.85f);
+        private static readonly Color replayBtnColor = new Color(0.18f, 0.45f, 0.85f, 0.85f);
         private static readonly Color closeBtnColor = new Color(0.25f, 0.25f, 0.3f, 0.85f);
         
         private void Awake()
@@ -37,7 +44,7 @@ namespace ARBadmintonNet.Replay
         private void Start()
         {
             SetupUI();
-            HideReplayButton();
+            HideAll();
         }
         
         private void OnEnable()
@@ -61,25 +68,67 @@ namespace ARBadmintonNet.Replay
         private void SetupUI()
         {
             if (isSetup) return;
-            isSetup = true;
             
             canvas = FindObjectOfType<Canvas>();
-            if (canvas == null) return;
+            if (canvas == null)
+            {
+                Debug.LogWarning("[ReplayUI] No Canvas found - will retry later");
+                return;
+            }
             
+            isSetup = true;
+            Debug.Log("[ReplayUI] SetupUI - creating buttons");
+            CreateRecordButton();
             CreateReplayButton();
             CreateVideoOverlay();
         }
         
+        private void CreateRecordButton()
+        {
+            // Record toggle — top-left, always visible during modes
+            recordButton = new GameObject("RecordBtn");
+            recordButton.transform.SetParent(canvas.transform, false);
+            
+            var rt = recordButton.AddComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0, 1);
+            rt.anchorMax = new Vector2(0, 1);
+            rt.anchoredPosition = new Vector2(60, -130);
+            rt.sizeDelta = new Vector2(140, 50);
+            
+            recordBtnImage = recordButton.AddComponent<Image>();
+            recordBtnImage.color = recordOffColor;
+            
+            var btn = recordButton.AddComponent<Button>();
+            btn.onClick.AddListener(OnRecordToggle);
+            
+            var textGO = new GameObject("Text");
+            textGO.transform.SetParent(recordButton.transform, false);
+            
+            var textRT = textGO.AddComponent<RectTransform>();
+            textRT.anchorMin = Vector2.zero;
+            textRT.anchorMax = Vector2.one;
+            textRT.offsetMin = Vector2.zero;
+            textRT.offsetMax = Vector2.zero;
+            
+            recordBtnText = textGO.AddComponent<TextMeshProUGUI>();
+            recordBtnText.text = "[REC] Record";
+            recordBtnText.fontSize = 18;
+            recordBtnText.alignment = TextAlignmentOptions.Center;
+            recordBtnText.color = Color.white;
+            recordBtnText.fontStyle = FontStyles.Bold;
+        }
+        
         private void CreateReplayButton()
         {
+            // Replay button — below record button, only visible when recording
             replayButton = new GameObject("ReplayBtn");
             replayButton.transform.SetParent(canvas.transform, false);
             
             var rt = replayButton.AddComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0, 1);  // Top-left
+            rt.anchorMin = new Vector2(0, 1);
             rt.anchorMax = new Vector2(0, 1);
-            rt.anchoredPosition = new Vector2(30, -100);
-            rt.sizeDelta = new Vector2(160, 50);
+            rt.anchoredPosition = new Vector2(60, -190);
+            rt.sizeDelta = new Vector2(140, 50);
             
             var img = replayButton.AddComponent<Image>();
             img.color = replayBtnColor;
@@ -87,8 +136,8 @@ namespace ARBadmintonNet.Replay
             var btn = replayButton.AddComponent<Button>();
             var colors = btn.colors;
             colors.normalColor = replayBtnColor;
-            colors.highlightedColor = new Color(0.95f, 0.35f, 0.35f, 0.9f);
-            colors.pressedColor = new Color(1f, 0.45f, 0.45f, 1f);
+            colors.highlightedColor = new Color(0.28f, 0.55f, 0.95f, 0.9f);
+            colors.pressedColor = new Color(0.35f, 0.6f, 1f, 1f);
             btn.colors = colors;
             btn.onClick.AddListener(OnReplayButtonPressed);
             
@@ -102,8 +151,8 @@ namespace ARBadmintonNet.Replay
             textRT.offsetMax = Vector2.zero;
             
             var tmp = textGO.AddComponent<TextMeshProUGUI>();
-            tmp.text = "⏪ Replay";
-            tmp.fontSize = 20;
+            tmp.text = "<< Replay";
+            tmp.fontSize = 18;
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.color = Color.white;
             tmp.fontStyle = FontStyles.Bold;
@@ -145,7 +194,7 @@ namespace ARBadmintonNet.Replay
             
             // Title
             CreateOverlayLabel(videoOverlay.transform, "Title",
-                "⏪ Instant Replay", 30,
+                "<< Instant Replay", 30,
                 new Vector2(0.5f, 1), new Vector2(0.5f, 1),
                 new Vector2(0, -70), new Vector2(400, 50),
                 Color.white);
@@ -172,7 +221,7 @@ namespace ARBadmintonNet.Replay
             closeBtn.onClick.AddListener(CloseReplay);
             
             CreateOverlayLabel(closeBtnGO.transform, "Text",
-                "✕ Close", 22,
+                "X Close", 22,
                 Vector2.zero, Vector2.one,
                 Vector2.zero, Vector2.zero,
                 Color.white);
@@ -206,8 +255,7 @@ namespace ARBadmintonNet.Replay
             rt.anchorMax = anchorMax;
             rt.anchoredPosition = position;
             rt.sizeDelta = size;
-            rt.offsetMin = (size == Vector2.zero) ? Vector2.zero : rt.offsetMin;
-            rt.offsetMax = (size == Vector2.zero) ? Vector2.zero : rt.offsetMax;
+            if (size == Vector2.zero) { rt.offsetMin = Vector2.zero; rt.offsetMax = Vector2.zero; }
             var tmp = go.AddComponent<TextMeshProUGUI>();
             tmp.text = text;
             tmp.fontSize = fontSize;
@@ -216,9 +264,58 @@ namespace ARBadmintonNet.Replay
             tmp.fontStyle = FontStyles.Bold;
         }
         
+        // ====== RECORD TOGGLE ======
+        
+        private void OnRecordToggle()
+        {
+            if (replayManager == null) return;
+            
+            if (isRecording)
+            {
+                // Stop recording
+                replayManager.StopBuffering();
+                isRecording = false;
+                UpdateRecordButtonState();
+                if (replayButton != null) replayButton.SetActive(false);
+                Debug.Log("[ReplayUI] Recording stopped by user");
+            }
+            else
+            {
+                // Start recording
+                replayManager.StartBuffering();
+                isRecording = true;
+                UpdateRecordButtonState();
+                if (replayButton != null) replayButton.SetActive(true);
+                Debug.Log("[ReplayUI] Recording started by user");
+            }
+        }
+        
+        private void UpdateRecordButtonState()
+        {
+            if (recordBtnImage != null)
+                recordBtnImage.color = isRecording ? recordOnColor : recordOffColor;
+            
+            if (recordBtnText != null)
+                recordBtnText.text = isRecording ? "[STOP]" : "[REC] Record";
+            
+            // Update button colors
+            var btn = recordButton?.GetComponent<Button>();
+            if (btn != null)
+            {
+                var c = btn.colors;
+                c.normalColor = isRecording ? recordOnColor : recordOffColor;
+                c.highlightedColor = isRecording 
+                    ? new Color(0.95f, 0.3f, 0.3f, 0.9f) 
+                    : new Color(0.22f, 0.22f, 0.28f, 0.9f);
+                btn.colors = c;
+            }
+        }
+        
+        // ====== REPLAY ======
+        
         private void OnReplayButtonPressed()
         {
-            if (replayManager == null || replayManager.IsExporting) return;
+            if (replayManager == null || replayManager.IsExporting || !isRecording) return;
             
             videoOverlay.SetActive(true);
             loadingIndicator.SetActive(true);
@@ -256,7 +353,6 @@ namespace ARBadmintonNet.Replay
             
             if (!videoPlayer.isPrepared)
             {
-                Debug.LogError("[ReplayUI] Video failed to prepare");
                 loadingIndicator.GetComponent<TextMeshProUGUI>().text = "Failed to load replay";
                 yield return new WaitForSeconds(2f);
                 CloseReplay();
@@ -304,7 +400,6 @@ namespace ARBadmintonNet.Replay
                 renderTexture = null;
             }
             
-            // Delete the exported clip file
             DeleteCurrentClip();
         }
         
@@ -328,19 +423,46 @@ namespace ARBadmintonNet.Replay
             }
         }
         
-        public void ShowReplayButton()
+        // ====== PUBLIC API ======
+        
+        /// <summary>Show the record button when entering a mode.</summary>
+        public void ShowRecordButton()
         {
-            if (replayButton != null) replayButton.SetActive(true);
+            // Retry setup if it failed earlier (e.g. canvas didn't exist yet)
+            if (!isSetup) SetupUI();
+            
+            Debug.Log($"[ReplayUI] ShowRecordButton called. isSetup={isSetup}, recordButton={recordButton != null}");
+            
+            if (recordButton != null) recordButton.SetActive(true);
+            // Replay button only visible when actively recording
+            if (replayButton != null) replayButton.SetActive(isRecording);
         }
         
-        public void HideReplayButton()
+        /// <summary>Hide everything when returning to startup.</summary>
+        public void HideAll()
         {
+            // Stop recording if active
+            if (isRecording && replayManager != null)
+            {
+                replayManager.StopBuffering();
+                isRecording = false;
+                UpdateRecordButtonState();
+            }
+            
+            if (recordButton != null) recordButton.SetActive(false);
             if (replayButton != null) replayButton.SetActive(false);
         }
+        
+        // Keep old API names working
+        public void ShowReplayButton() => ShowRecordButton();
+        public void HideReplayButton() => HideAll();
         
         private void OnDestroy()
         {
             DeleteCurrentClip();
+            
+            if (isRecording && replayManager != null)
+                replayManager.StopBuffering();
             
             if (renderTexture != null)
             {

@@ -51,8 +51,20 @@ namespace ARBadmintonNet.UI
                 arSessionManager = FindObjectOfType<ARBadmintonNet.AR.ARSessionManager>();
             if (replayManager == null)
                 replayManager = FindObjectOfType<ARBadmintonNet.Replay.ReplayManager>();
+            if (replayManager == null)
+            {
+                var go = new GameObject("ReplayManager");
+                replayManager = go.AddComponent<ARBadmintonNet.Replay.ReplayManager>();
+                Debug.Log("[ModeSelection] Auto-created ReplayManager");
+            }
             if (replayUI == null)
                 replayUI = FindObjectOfType<ARBadmintonNet.Replay.ReplayUI>();
+            if (replayUI == null)
+            {
+                var go = new GameObject("ReplayUI");
+                replayUI = go.AddComponent<ARBadmintonNet.Replay.ReplayUI>();
+                Debug.Log("[ModeSelection] Auto-created ReplayUI");
+            }
         }
         
         private void Start()
@@ -277,9 +289,8 @@ namespace ARBadmintonNet.UI
             if (startupPanel != null) startupPanel.SetActive(true);
             if (modeSwitchButton != null) modeSwitchButton.SetActive(false);
             
-            // Stop replay buffering when back at startup
-            if (replayManager != null) replayManager.StopBuffering();
-            if (replayUI != null) replayUI.HideReplayButton();
+            // Hide replay controls when back at startup
+            if (replayUI != null) replayUI.HideAll();
         }
         
         public void SwitchToMode(AppMode mode)
@@ -288,9 +299,16 @@ namespace ARBadmintonNet.UI
             if (arSessionManager != null)
                 arSessionManager.StartARSession();
             
-            // Start replay buffering
-            if (replayManager != null) replayManager.StartBuffering();
-            if (replayUI != null) replayUI.ShowReplayButton();
+            // Show replay record button (user controls when to start/stop)
+            if (replayUI != null)
+            {
+                replayUI.ShowRecordButton();
+                Debug.Log("[ModeSelection] ShowRecordButton called on ReplayUI");
+            }
+            else
+            {
+                Debug.LogWarning("[ModeSelection] ReplayUI is null - cannot show record button!");
+            }
             
             // Hide startup panel
             if (startupPanel != null) startupPanel.SetActive(false);

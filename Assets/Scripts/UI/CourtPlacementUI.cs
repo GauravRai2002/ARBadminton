@@ -7,6 +7,7 @@ namespace ARBadmintonNet.UI
     /// <summary>
     /// Creates and manages placement adjustment UI for the badminton court markings.
     /// Court only needs Y-axis rotation (flat on ground) and XZ movement.
+    /// All movement/rotation buttons support tap-and-hold for continuous adjustment.
     /// </summary>
     public class CourtPlacementUI : MonoBehaviour
     {
@@ -30,11 +31,12 @@ namespace ARBadmintonNet.UI
         private static readonly Color unlockColor = new Color(0.85f, 0.55f, 0.15f, 0.85f);
         private static readonly Color rotColor = new Color(0.3f, 0.75f, 0.4f, 0.85f);
         
-        private static readonly float dpadBtnSize = 100f;
-        private static readonly float gap = 12f;
-        private static readonly float safeTop = 110f;
-        private static readonly float safeBottom = 90f;
-        private static readonly float safeSide = 25f;
+        // Generous safe-area padding for curved edges and Dynamic Island
+        private static readonly float dpadBtnSize = 90f;
+        private static readonly float gap = 10f;
+        private static readonly float safeTop = 130f;
+        private static readonly float safeBottom = 120f;
+        private static readonly float safeSide = 60f;
         
         private void Awake()
         {
@@ -105,67 +107,67 @@ namespace ARBadmintonNet.UI
             CreateLabel(adjustmentPanel.transform, "InstructionLabel",
                 "🎯 Position the Court", 26,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0, -(safeTop + 20)), new Vector2(400, 45));
+                new Vector2(0, -(safeTop + 10)), new Vector2(400, 45));
             
             // === D-PAD (bottom-left) ===
-            float leftX = safeSide + dpadBtnSize * 1.5f;
+            float leftX = safeSide + dpadBtnSize + gap;
             float bottomY = safeBottom + dpadBtnSize * 2f;
             
-            CreateButton(adjustmentPanel.transform, "ForwardBtn", "▲",
+            CreateHoldableButton(adjustmentPanel.transform, "ForwardBtn", "▲",
                 new Vector2(0, 0), new Vector2(0, 0),
                 new Vector2(leftX, bottomY + dpadBtnSize + gap), new Vector2(dpadBtnSize, dpadBtnSize),
-                () => MoveCourt(GetForwardDir()), btnColor, 32);
+                () => MoveCourt(GetForwardDir()), btnColor, 28);
             
-            CreateButton(adjustmentPanel.transform, "BackBtn", "▼",
+            CreateHoldableButton(adjustmentPanel.transform, "BackBtn", "▼",
                 new Vector2(0, 0), new Vector2(0, 0),
                 new Vector2(leftX, bottomY - dpadBtnSize - gap), new Vector2(dpadBtnSize, dpadBtnSize),
-                () => MoveCourt(-GetForwardDir()), btnColor, 32);
+                () => MoveCourt(-GetForwardDir()), btnColor, 28);
             
-            CreateButton(adjustmentPanel.transform, "LeftBtn", "◀",
+            CreateHoldableButton(adjustmentPanel.transform, "LeftBtn", "◀",
                 new Vector2(0, 0), new Vector2(0, 0),
                 new Vector2(leftX - dpadBtnSize - gap, bottomY), new Vector2(dpadBtnSize, dpadBtnSize),
-                () => MoveCourt(-GetRightDir()), btnColor, 32);
+                () => MoveCourt(-GetRightDir()), btnColor, 28);
             
-            CreateButton(adjustmentPanel.transform, "RightBtn", "▶",
+            CreateHoldableButton(adjustmentPanel.transform, "RightBtn", "▶",
                 new Vector2(0, 0), new Vector2(0, 0),
                 new Vector2(leftX + dpadBtnSize + gap, bottomY), new Vector2(dpadBtnSize, dpadBtnSize),
-                () => MoveCourt(GetRightDir()), btnColor, 32);
+                () => MoveCourt(GetRightDir()), btnColor, 28);
             
-            CreateLabel(adjustmentPanel.transform, "MoveLabel", "MOVE", 16,
+            CreateLabel(adjustmentPanel.transform, "MoveLabel", "MOVE", 14,
                 new Vector2(0, 0), new Vector2(0, 0),
                 new Vector2(leftX, bottomY), new Vector2(dpadBtnSize, dpadBtnSize));
             
             // === ROTATION (bottom-right, Y-axis only for court) ===
-            float rightX = -safeSide - dpadBtnSize;
+            float rightX = -(safeSide + dpadBtnSize);
             
-            CreateLabel(adjustmentPanel.transform, "RotLabel", "↔ Rotate", 16,
+            CreateLabel(adjustmentPanel.transform, "RotLabel", "↔ Rotate", 14,
                 new Vector2(1, 0), new Vector2(1, 0),
-                new Vector2(rightX, bottomY + dpadBtnSize + gap + 30), new Vector2(200, 25));
+                new Vector2(rightX, bottomY + dpadBtnSize + gap + 28), new Vector2(200, 22));
             
             // Coarse rotation
-            CreateButton(adjustmentPanel.transform, "RotL", "↺ 5°",
+            CreateHoldableButton(adjustmentPanel.transform, "RotL", "↺ 5°",
                 new Vector2(1, 0), new Vector2(1, 0),
-                new Vector2(rightX - 55, bottomY + dpadBtnSize / 2 + gap), new Vector2(dpadBtnSize, dpadBtnSize),
-                () => RotateCourt(-rotateStep), rotColor, 22);
+                new Vector2(rightX - 50, bottomY + dpadBtnSize / 2 + gap), new Vector2(dpadBtnSize, dpadBtnSize),
+                () => RotateCourt(-rotateStep), rotColor, 20);
             
-            CreateButton(adjustmentPanel.transform, "RotR", "↻ 5°",
+            CreateHoldableButton(adjustmentPanel.transform, "RotR", "↻ 5°",
                 new Vector2(1, 0), new Vector2(1, 0),
-                new Vector2(rightX + 55, bottomY + dpadBtnSize / 2 + gap), new Vector2(dpadBtnSize, dpadBtnSize),
-                () => RotateCourt(rotateStep), rotColor, 22);
+                new Vector2(rightX + 50, bottomY + dpadBtnSize / 2 + gap), new Vector2(dpadBtnSize, dpadBtnSize),
+                () => RotateCourt(rotateStep), rotColor, 20);
             
             // Fine rotation (1 degree)
-            CreateButton(adjustmentPanel.transform, "RotLFine", "↺ 1°",
+            CreateHoldableButton(adjustmentPanel.transform, "RotLFine", "↺ 1°",
                 new Vector2(1, 0), new Vector2(1, 0),
-                new Vector2(rightX - 55, bottomY - dpadBtnSize / 2 - gap), new Vector2(dpadBtnSize, dpadBtnSize),
-                () => RotateCourt(-1f), btnColor, 22);
+                new Vector2(rightX - 50, bottomY - dpadBtnSize / 2 - gap), new Vector2(dpadBtnSize, dpadBtnSize),
+                () => RotateCourt(-1f), btnColor, 20);
             
-            CreateButton(adjustmentPanel.transform, "RotRFine", "↻ 1°",
+            CreateHoldableButton(adjustmentPanel.transform, "RotRFine", "↻ 1°",
                 new Vector2(1, 0), new Vector2(1, 0),
-                new Vector2(rightX + 55, bottomY - dpadBtnSize / 2 - gap), new Vector2(dpadBtnSize, dpadBtnSize),
-                () => RotateCourt(1f), btnColor, 22);
+                new Vector2(rightX + 50, bottomY - dpadBtnSize / 2 - gap), new Vector2(dpadBtnSize, dpadBtnSize),
+                () => RotateCourt(1f), btnColor, 20);
             
             // === LOCK & RESET (side by side) ===
-            float actionY = safeBottom + dpadBtnSize * 3.5f;
+            float actionY = safeBottom + dpadBtnSize * 3.5f + 20;
             
             CreateButton(adjustmentPanel.transform, "LockBtn", "✓ Lock",
                 new Vector2(0.5f, 0), new Vector2(0.5f, 0),
@@ -189,13 +191,11 @@ namespace ARBadmintonNet.UI
             rt.offsetMin = Vector2.zero;
             rt.offsetMax = Vector2.zero;
             
-            // Locked status text
             CreateLabel(lockedPanel.transform, "LockedLabel",
                 "🔒 Court Locked", 24,
                 new Vector2(0.5f, 1), new Vector2(0.5f, 1),
-                new Vector2(0, -(safeTop + 20)), new Vector2(300, 40));
+                new Vector2(0, -(safeTop + 10)), new Vector2(300, 40));
             
-            // Unlock + Reset side by side at bottom
             CreateButton(lockedPanel.transform, "UnlockBtn", "🔓 Adjust",
                 new Vector2(0.5f, 0), new Vector2(0.5f, 0),
                 new Vector2(-110, safeBottom + 30), new Vector2(200, 55),
@@ -207,7 +207,20 @@ namespace ARBadmintonNet.UI
                 OnResetPressed, resetColor, 22);
         }
         
-        // ====== BUTTON & LABEL CREATORS ======
+        // ====== BUTTON CREATORS ======
+        
+        private GameObject CreateHoldableButton(Transform parent, string name, string text,
+            Vector2 anchorMin, Vector2 anchorMax, Vector2 position, Vector2 size,
+            System.Action holdAction, Color bgColor, int fontSize = 28)
+        {
+            var btnGO = CreateButton(parent, name, text, anchorMin, anchorMax, position, size,
+                () => holdAction(), bgColor, fontSize);
+            
+            var hold = btnGO.AddComponent<HoldButton>();
+            hold.SetAction(holdAction);
+            
+            return btnGO;
+        }
         
         private GameObject CreateButton(Transform parent, string name, string text,
             Vector2 anchorMin, Vector2 anchorMax, Vector2 position, Vector2 size,

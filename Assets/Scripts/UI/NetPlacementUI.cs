@@ -7,6 +7,7 @@ namespace ARBadmintonNet.UI
     /// <summary>
     /// Creates and manages placement adjustment UI programmatically.
     /// Shows directional buttons + 3-axis rotation + lock/reset after net is placed.
+    /// All movement/rotation buttons support tap-and-hold for continuous adjustment.
     /// </summary>
     public class NetPlacementUI : MonoBehaviour
     {
@@ -33,11 +34,12 @@ namespace ARBadmintonNet.UI
         private static readonly Color rotTiltColor = new Color(0.75f, 0.3f, 0.3f, 0.85f);
         private static readonly Color rotRollColor = new Color(0.3f, 0.45f, 0.8f, 0.85f);
         
-        private static readonly float dpadBtnSize = 100f;
-        private static readonly float gap = 12f;
-        private static readonly float safeTop = 110f;
-        private static readonly float safeBottom = 90f;
-        private static readonly float safeSide = 25f;
+        // Generous safe-area padding for curved edges and Dynamic Island
+        private static readonly float dpadBtnSize = 90f;
+        private static readonly float gap = 10f;
+        private static readonly float safeTop = 130f;
+        private static readonly float safeBottom = 120f;
+        private static readonly float safeSide = 60f;
         
         private void Awake()
         {
@@ -106,115 +108,115 @@ namespace ARBadmintonNet.UI
             
             // === INSTRUCTION ===
             CreateLabel(adjustmentPanel.transform, "InstructionLabel",
-                "🎯 Position the Net", 26,
+                "Position the Net", 26,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0, -(safeTop + 20)), new Vector2(400, 45));
+                new Vector2(0, -(safeTop + 10)), new Vector2(400, 45));
             
             // === D-PAD (bottom-left) ===
-            float leftX = safeSide + dpadBtnSize * 1.5f;
+            float leftX = safeSide + dpadBtnSize + gap;
             float bottomY = safeBottom + dpadBtnSize * 2f;
             
-            CreateButton(adjustmentPanel.transform, "ForwardBtn", "▲",
+            CreateHoldableButton(adjustmentPanel.transform, "ForwardBtn", "UP",
                 new Vector2(0, 0), new Vector2(0, 0),
                 new Vector2(leftX, bottomY + dpadBtnSize + gap), new Vector2(dpadBtnSize, dpadBtnSize),
-                () => MoveNet(GetForwardDir()), btnColor, 32);
+                () => MoveNet(GetForwardDir()), btnColor, 28);
             
-            CreateButton(adjustmentPanel.transform, "BackBtn", "▼",
+            CreateHoldableButton(adjustmentPanel.transform, "BackBtn", "DN",
                 new Vector2(0, 0), new Vector2(0, 0),
                 new Vector2(leftX, bottomY - dpadBtnSize - gap), new Vector2(dpadBtnSize, dpadBtnSize),
-                () => MoveNet(-GetForwardDir()), btnColor, 32);
+                () => MoveNet(-GetForwardDir()), btnColor, 28);
             
-            CreateButton(adjustmentPanel.transform, "LeftBtn", "◀",
+            CreateHoldableButton(adjustmentPanel.transform, "LeftBtn", "LT",
                 new Vector2(0, 0), new Vector2(0, 0),
                 new Vector2(leftX - dpadBtnSize - gap, bottomY), new Vector2(dpadBtnSize, dpadBtnSize),
-                () => MoveNet(-GetRightDir()), btnColor, 32);
+                () => MoveNet(-GetRightDir()), btnColor, 28);
             
-            CreateButton(adjustmentPanel.transform, "RightBtn", "▶",
+            CreateHoldableButton(adjustmentPanel.transform, "RightBtn", "RT",
                 new Vector2(0, 0), new Vector2(0, 0),
                 new Vector2(leftX + dpadBtnSize + gap, bottomY), new Vector2(dpadBtnSize, dpadBtnSize),
-                () => MoveNet(GetRightDir()), btnColor, 32);
+                () => MoveNet(GetRightDir()), btnColor, 28);
             
-            CreateLabel(adjustmentPanel.transform, "MoveLabel", "MOVE", 16,
+            CreateLabel(adjustmentPanel.transform, "MoveLabel", "MOVE", 14,
                 new Vector2(0, 0), new Vector2(0, 0),
                 new Vector2(leftX, bottomY), new Vector2(dpadBtnSize, dpadBtnSize));
             
             // === HEIGHT (bottom-right) ===
-            float rightX = -safeSide - dpadBtnSize / 2;
+            float rightX = -(safeSide + dpadBtnSize / 2 + gap);
             
-            CreateButton(adjustmentPanel.transform, "UpBtn", "⬆",
+            CreateHoldableButton(adjustmentPanel.transform, "UpBtn", "UP",
                 new Vector2(1, 0), new Vector2(1, 0),
                 new Vector2(rightX, bottomY + dpadBtnSize / 2 + gap), new Vector2(dpadBtnSize, dpadBtnSize),
-                () => MoveNetVertical(heightStep), btnColor, 32);
+                () => MoveNetVertical(heightStep), btnColor, 28);
             
-            CreateButton(adjustmentPanel.transform, "DownBtn", "⬇",
+            CreateHoldableButton(adjustmentPanel.transform, "DownBtn", "DN",
                 new Vector2(1, 0), new Vector2(1, 0),
                 new Vector2(rightX, bottomY - dpadBtnSize / 2 - gap), new Vector2(dpadBtnSize, dpadBtnSize),
-                () => MoveNetVertical(-heightStep), btnColor, 32);
+                () => MoveNetVertical(-heightStep), btnColor, 28);
             
-            CreateLabel(adjustmentPanel.transform, "HeightLabel", "HEIGHT", 16,
+            CreateLabel(adjustmentPanel.transform, "HeightLabel", "HEIGHT", 14,
                 new Vector2(1, 0), new Vector2(1, 0),
-                new Vector2(rightX, bottomY - dpadBtnSize * 1.5f - gap * 2), new Vector2(dpadBtnSize, 30));
+                new Vector2(rightX, bottomY - dpadBtnSize * 1.5f - gap), new Vector2(dpadBtnSize, 25));
             
             // === ROTATION (center, stacked) ===
-            float rotBtnW = 100f;
-            float rotBtnH = 55f;
+            float rotBtnW = 90f;
+            float rotBtnH = 50f;
             float rotRowGap = 8f;
-            float rotBaseY = safeBottom + 20f;
+            float rotBaseY = safeBottom + 15f;
             
             // Row 1: Spin (Y-axis)
-            CreateLabel(adjustmentPanel.transform, "SpinLabel", "↔ Spin", 16,
+            CreateLabel(adjustmentPanel.transform, "SpinLabel", "Spin (Y)", 14,
                 new Vector2(0.5f, 0), new Vector2(0.5f, 0),
-                new Vector2(0, rotBaseY + (rotBtnH + rotRowGap) * 2 + 30), new Vector2(100, 25));
+                new Vector2(0, rotBaseY + (rotBtnH + rotRowGap) * 2 + 28), new Vector2(90, 22));
             
-            CreateButton(adjustmentPanel.transform, "SpinL", "↺",
+            CreateHoldableButton(adjustmentPanel.transform, "SpinL", "< -",
                 new Vector2(0.5f, 0), new Vector2(0.5f, 0),
-                new Vector2(-rotBtnW/2 - 6, rotBaseY + (rotBtnH + rotRowGap) * 2), new Vector2(rotBtnW, rotBtnH),
-                () => RotateNetAxis(Vector3.up, -rotateStep), rotSpinColor, 26);
+                new Vector2(-rotBtnW/2 - 5, rotBaseY + (rotBtnH + rotRowGap) * 2), new Vector2(rotBtnW, rotBtnH),
+                () => RotateNetAxis(Vector3.up, -rotateStep), rotSpinColor, 24);
             
-            CreateButton(adjustmentPanel.transform, "SpinR", "↻",
+            CreateHoldableButton(adjustmentPanel.transform, "SpinR", "+ >",
                 new Vector2(0.5f, 0), new Vector2(0.5f, 0),
-                new Vector2(rotBtnW/2 + 6, rotBaseY + (rotBtnH + rotRowGap) * 2), new Vector2(rotBtnW, rotBtnH),
-                () => RotateNetAxis(Vector3.up, rotateStep), rotSpinColor, 26);
+                new Vector2(rotBtnW/2 + 5, rotBaseY + (rotBtnH + rotRowGap) * 2), new Vector2(rotBtnW, rotBtnH),
+                () => RotateNetAxis(Vector3.up, rotateStep), rotSpinColor, 24);
             
             // Row 2: Tilt (X-axis)
-            CreateLabel(adjustmentPanel.transform, "TiltLabel", "↕ Tilt", 16,
+            CreateLabel(adjustmentPanel.transform, "TiltLabel", "Tilt (X)", 14,
                 new Vector2(0.5f, 0), new Vector2(0.5f, 0),
-                new Vector2(0, rotBaseY + (rotBtnH + rotRowGap) + 30), new Vector2(100, 25));
+                new Vector2(0, rotBaseY + (rotBtnH + rotRowGap) + 28), new Vector2(90, 22));
             
-            CreateButton(adjustmentPanel.transform, "TiltL", "↺",
+            CreateHoldableButton(adjustmentPanel.transform, "TiltL", "< -",
                 new Vector2(0.5f, 0), new Vector2(0.5f, 0),
-                new Vector2(-rotBtnW/2 - 6, rotBaseY + (rotBtnH + rotRowGap)), new Vector2(rotBtnW, rotBtnH),
-                () => RotateNetAxis(Vector3.right, -rotateStep), rotTiltColor, 26);
+                new Vector2(-rotBtnW/2 - 5, rotBaseY + (rotBtnH + rotRowGap)), new Vector2(rotBtnW, rotBtnH),
+                () => RotateNetAxis(Vector3.right, -rotateStep), rotTiltColor, 24);
             
-            CreateButton(adjustmentPanel.transform, "TiltR", "↻",
+            CreateHoldableButton(adjustmentPanel.transform, "TiltR", "+ >",
                 new Vector2(0.5f, 0), new Vector2(0.5f, 0),
-                new Vector2(rotBtnW/2 + 6, rotBaseY + (rotBtnH + rotRowGap)), new Vector2(rotBtnW, rotBtnH),
-                () => RotateNetAxis(Vector3.right, rotateStep), rotTiltColor, 26);
+                new Vector2(rotBtnW/2 + 5, rotBaseY + (rotBtnH + rotRowGap)), new Vector2(rotBtnW, rotBtnH),
+                () => RotateNetAxis(Vector3.right, rotateStep), rotTiltColor, 24);
             
             // Row 3: Roll (Z-axis)
-            CreateLabel(adjustmentPanel.transform, "RollLabel", "↗ Roll", 16,
+            CreateLabel(adjustmentPanel.transform, "RollLabel", "Roll (Z)", 14,
                 new Vector2(0.5f, 0), new Vector2(0.5f, 0),
-                new Vector2(0, rotBaseY + 30), new Vector2(100, 25));
+                new Vector2(0, rotBaseY + 28), new Vector2(90, 22));
             
-            CreateButton(adjustmentPanel.transform, "RollL", "↺",
+            CreateHoldableButton(adjustmentPanel.transform, "RollL", "< -",
                 new Vector2(0.5f, 0), new Vector2(0.5f, 0),
-                new Vector2(-rotBtnW/2 - 6, rotBaseY), new Vector2(rotBtnW, rotBtnH),
-                () => RotateNetAxis(Vector3.forward, -rotateStep), rotRollColor, 26);
+                new Vector2(-rotBtnW/2 - 5, rotBaseY), new Vector2(rotBtnW, rotBtnH),
+                () => RotateNetAxis(Vector3.forward, -rotateStep), rotRollColor, 24);
             
-            CreateButton(adjustmentPanel.transform, "RollR", "↻",
+            CreateHoldableButton(adjustmentPanel.transform, "RollR", "+ >",
                 new Vector2(0.5f, 0), new Vector2(0.5f, 0),
-                new Vector2(rotBtnW/2 + 6, rotBaseY), new Vector2(rotBtnW, rotBtnH),
-                () => RotateNetAxis(Vector3.forward, rotateStep), rotRollColor, 26);
+                new Vector2(rotBtnW/2 + 5, rotBaseY), new Vector2(rotBtnW, rotBtnH),
+                () => RotateNetAxis(Vector3.forward, rotateStep), rotRollColor, 24);
             
-            // === LOCK & RESET (side by side, bottom bar) ===
-            float actionY = safeBottom + dpadBtnSize * 3.5f;
+            // === LOCK & RESET (side by side above D-pad) ===
+            float actionY = safeBottom + dpadBtnSize * 3.5f + 20;
             
-            CreateButton(adjustmentPanel.transform, "LockBtn", "✓ Lock",
+            CreateButton(adjustmentPanel.transform, "LockBtn", "LOCK",
                 new Vector2(0.5f, 0), new Vector2(0.5f, 0),
                 new Vector2(-110, actionY), new Vector2(200, 55),
                 OnLockPressed, lockColor, 22);
             
-            CreateButton(adjustmentPanel.transform, "ResetBtn", "✗ Reset",
+            CreateButton(adjustmentPanel.transform, "ResetBtn", "RESET",
                 new Vector2(0.5f, 0), new Vector2(0.5f, 0),
                 new Vector2(110, actionY), new Vector2(200, 55),
                 OnResetPressed, resetColor, 22);
@@ -231,25 +233,40 @@ namespace ARBadmintonNet.UI
             rt.offsetMin = Vector2.zero;
             rt.offsetMax = Vector2.zero;
             
-            // Locked status text
             CreateLabel(lockedPanel.transform, "LockedLabel",
-                "🔒 Net Locked", 24,
+                "Net Locked", 24,
                 new Vector2(0.5f, 1), new Vector2(0.5f, 1),
-                new Vector2(0, -(safeTop + 20)), new Vector2(300, 40));
+                new Vector2(0, -(safeTop + 10)), new Vector2(300, 40));
             
-            // Unlock + Reset side by side at bottom
-            CreateButton(lockedPanel.transform, "UnlockBtn", "🔓 Adjust",
+            CreateButton(lockedPanel.transform, "UnlockBtn", "UNLOCK",
                 new Vector2(0.5f, 0), new Vector2(0.5f, 0),
                 new Vector2(-110, safeBottom + 30), new Vector2(200, 55),
                 OnUnlockPressed, unlockColor, 22);
             
-            CreateButton(lockedPanel.transform, "ResetBtn2", "✗ Reset",
+            CreateButton(lockedPanel.transform, "ResetBtn2", "RESET",
                 new Vector2(0.5f, 0), new Vector2(0.5f, 0),
                 new Vector2(110, safeBottom + 30), new Vector2(200, 55),
                 OnResetPressed, resetColor, 22);
         }
         
-        // ====== BUTTON & LABEL CREATORS ======
+        // ====== BUTTON CREATORS ======
+        
+        /// <summary>
+        /// Create a button that supports hold-to-repeat for continuous adjustment.
+        /// </summary>
+        private GameObject CreateHoldableButton(Transform parent, string name, string text,
+            Vector2 anchorMin, Vector2 anchorMax, Vector2 position, Vector2 size,
+            System.Action holdAction, Color bgColor, int fontSize = 28)
+        {
+            var btnGO = CreateButton(parent, name, text, anchorMin, anchorMax, position, size,
+                () => holdAction(), bgColor, fontSize);
+            
+            // Add hold-to-repeat behavior
+            var hold = btnGO.AddComponent<HoldButton>();
+            hold.SetAction(holdAction);
+            
+            return btnGO;
+        }
         
         private GameObject CreateButton(Transform parent, string name, string text,
             Vector2 anchorMin, Vector2 anchorMax, Vector2 position, Vector2 size,
