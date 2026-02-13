@@ -116,7 +116,7 @@ namespace ARBadmintonNet.UI
             
             // Title
             CreateLabel(startupPanel.transform, "Title",
-                "🏸 AR Badminton", 52,
+                "AR Badminton", 52,
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                 new Vector2(0, 280), new Vector2(600, 80),
                 Color.white);
@@ -133,13 +133,13 @@ namespace ARBadmintonNet.UI
             float btnHeight = 150f;
             
             CreateModeButton(startupPanel.transform, "NetModeBtn",
-                "🏸  Net Mode", "Place a virtual badminton net",
+                "[Net Mode]", "Place a virtual badminton net",
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                 new Vector2(0, 50), new Vector2(btnWidth, btnHeight),
                 () => SwitchToMode(AppMode.Net), netModeColor);
             
             CreateModeButton(startupPanel.transform, "CourtModeBtn",
-                "📐  Court Mode", "Place court line markings",
+                "[Court Mode]", "Place court line markings",
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                 new Vector2(0, -130), new Vector2(btnWidth, btnHeight),
                 () => SwitchToMode(AppMode.Court), courtModeColor);
@@ -184,7 +184,7 @@ namespace ARBadmintonNet.UI
             textRT.offsetMax = Vector2.zero;
             
             var tmp = textGO.AddComponent<TextMeshProUGUI>();
-            tmp.text = "⇄ Switch";
+            tmp.text = "SWITCH";
             tmp.fontSize = 22;
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.color = Color.white;
@@ -338,14 +338,14 @@ namespace ARBadmintonNet.UI
                 SetCourtActive(false);
                 
                 // Update switch button text
-                UpdateSwitchButtonText("⇄ Court Mode");
+                UpdateSwitchButtonText("To Court Mode");
             }
             else if (mode == AppMode.Court)
             {
                 SetNetActive(false);
                 SetCourtActive(true);
                 
-                UpdateSwitchButtonText("⇄ Net Mode");
+                UpdateSwitchButtonText("To Net Mode");
             }
             
             // Show the persistent mode switch button

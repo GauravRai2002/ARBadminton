@@ -55,7 +55,8 @@ namespace ARBadmintonNet.AR
         public void StopARSession()
         {
             Debug.Log("Stopping AR Session...");
-            arSession.enabled = false;
+            if (arSession != null)
+                arSession.enabled = false;
             IsSessionActive = false;
         }
         

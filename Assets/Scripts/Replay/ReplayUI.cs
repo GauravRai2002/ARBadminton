@@ -92,8 +92,8 @@ namespace ARBadmintonNet.Replay
             var rt = recordButton.AddComponent<RectTransform>();
             rt.anchorMin = new Vector2(0, 1);
             rt.anchorMax = new Vector2(0, 1);
-            rt.anchoredPosition = new Vector2(60, -130);
-            rt.sizeDelta = new Vector2(140, 50);
+            rt.anchoredPosition = new Vector2(90, -140); // Increased margin
+            rt.sizeDelta = new Vector2(180, 70); // Larger touch target
             
             recordBtnImage = recordButton.AddComponent<Image>();
             recordBtnImage.color = recordOffColor;
@@ -112,7 +112,7 @@ namespace ARBadmintonNet.Replay
             
             recordBtnText = textGO.AddComponent<TextMeshProUGUI>();
             recordBtnText.text = "[REC] Record";
-            recordBtnText.fontSize = 18;
+            recordBtnText.fontSize = 24; // Larger text
             recordBtnText.alignment = TextAlignmentOptions.Center;
             recordBtnText.color = Color.white;
             recordBtnText.fontStyle = FontStyles.Bold;
@@ -127,8 +127,8 @@ namespace ARBadmintonNet.Replay
             var rt = replayButton.AddComponent<RectTransform>();
             rt.anchorMin = new Vector2(0, 1);
             rt.anchorMax = new Vector2(0, 1);
-            rt.anchoredPosition = new Vector2(60, -190);
-            rt.sizeDelta = new Vector2(140, 50);
+            rt.anchoredPosition = new Vector2(90, -220); // Increased margin
+            rt.sizeDelta = new Vector2(180, 70); // Larger touch target
             
             var img = replayButton.AddComponent<Image>();
             img.color = replayBtnColor;
@@ -152,7 +152,7 @@ namespace ARBadmintonNet.Replay
             
             var tmp = textGO.AddComponent<TextMeshProUGUI>();
             tmp.text = "<< Replay";
-            tmp.fontSize = 18;
+            tmp.fontSize = 24; // Larger text
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.color = Color.white;
             tmp.fontStyle = FontStyles.Bold;
@@ -319,7 +319,10 @@ namespace ARBadmintonNet.Replay
             
             videoOverlay.SetActive(true);
             loadingIndicator.SetActive(true);
-            videoDisplay.gameObject.SetActive(false);
+            
+            // Do NOT disable the GameObject, otherwise VideoPlayer component is disabled too!
+            // Just disable the RawImage component so it's invisible until ready
+            if (videoDisplay != null) videoDisplay.enabled = false;
             
             replayManager.ExportReplay();
         }
@@ -360,6 +363,10 @@ namespace ARBadmintonNet.Replay
             }
             
             loadingIndicator.SetActive(false);
+            
+            // Enable RawImage now that video is ready
+            if (videoDisplay != null) videoDisplay.enabled = true;
+            
             videoDisplay.gameObject.SetActive(true);
             videoPlayer.Play();
         }
