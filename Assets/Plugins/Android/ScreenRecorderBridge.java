@@ -368,6 +368,7 @@ public class ScreenRecorderBridge {
         }
 
         exportStatus = 1; // exporting
+        exportedClipPath = null; // Clear old path
 
         // Must finalize the current segment on main thread first
         mainHandler.post(new Runnable() {
@@ -498,6 +499,7 @@ public class ScreenRecorderBridge {
 
     public void resetExportStatus() {
         exportStatus = 0;
+        exportedClipPath = null;
         errorMessage = "";
     }
 
