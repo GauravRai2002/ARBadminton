@@ -17,6 +17,7 @@ namespace ARBadmintonNet.UI
         [SerializeField] private NetPlacementUI netUI;
         [SerializeField] private CourtPlacementUI courtUI;
         [SerializeField] private ARBadmintonNet.Detection.MotionBasedTracker motionTracker;
+        [SerializeField] private ARBadmintonNet.AR.ARSessionManager arSessionManager;
         
         public enum AppMode { None, Net, Court }
         
@@ -44,6 +45,8 @@ namespace ARBadmintonNet.UI
                 courtUI = FindObjectOfType<CourtPlacementUI>();
             if (motionTracker == null)
                 motionTracker = FindObjectOfType<ARBadmintonNet.Detection.MotionBasedTracker>();
+            if (arSessionManager == null)
+                arSessionManager = FindObjectOfType<ARBadmintonNet.AR.ARSessionManager>();
         }
         
         private void Start()
@@ -89,47 +92,47 @@ namespace ARBadmintonNet.UI
             rt.offsetMin = Vector2.zero;
             rt.offsetMax = Vector2.zero;
             
-            // Semi-transparent dark overlay
+            // Solid dark background — hides camera feed until mode is selected
             var bg = startupPanel.AddComponent<Image>();
-            bg.color = new Color(0, 0, 0, 0.7f);
+            bg.color = new Color(0.08f, 0.08f, 0.12f, 1f);
             
             // Title
             CreateLabel(startupPanel.transform, "Title",
-                "AR Badminton", 48,
+                "AR Badminton", 56,
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0, 200), new Vector2(500, 80),
+                new Vector2(0, 280), new Vector2(600, 90),
                 Color.white);
             
             // Subtitle
             CreateLabel(startupPanel.transform, "Subtitle",
-                "Choose what to place", 24,
+                "Choose a placement mode", 28,
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0, 140), new Vector2(400, 40),
-                new Color(1, 1, 1, 0.7f));
+                new Vector2(0, 200), new Vector2(500, 50),
+                new Color(1, 1, 1, 0.6f));
             
-            // Net Mode button
-            float btnWidth = 500f; // Increased from 300
-            float btnHeight = 160f; // Increased from 100
+            // Net Mode button — large with generous spacing
+            float btnWidth = 700f;
+            float btnHeight = 180f;
             
             CreateModeButton(startupPanel.transform, "NetModeBtn",
-                "Net Mode", "Place a badminton net\nfor collision detection",
+                "🏸  Net Mode", "Place a badminton net for collision detection",
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0, 50), new Vector2(btnWidth, btnHeight),
+                new Vector2(0, 60), new Vector2(btnWidth, btnHeight),
                 () => SwitchToMode(AppMode.Net), netModeColor);
             
             // Court Mode button
             CreateModeButton(startupPanel.transform, "CourtModeBtn",
-                "Court Mode", "Place court markings\nfor line tracing",
+                "📐  Court Mode", "Place court line markings for practice",
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0, -150), new Vector2(btnWidth, btnHeight),
+                new Vector2(0, -160), new Vector2(btnWidth, btnHeight),
                 () => SwitchToMode(AppMode.Court), courtModeColor);
             
             // Instruction
             CreateLabel(startupPanel.transform, "Instruction",
-                "Tap to place. Switch modes anytime.", 18,
+                "Tap to begin. You can switch modes anytime.", 20,
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0, -220), new Vector2(400, 30),
-                new Color(1, 1, 1, 0.5f));
+                new Vector2(0, -290), new Vector2(500, 40),
+                new Color(1, 1, 1, 0.4f));
         }
         
         private void CreateModeSwitchButton()
@@ -138,10 +141,10 @@ namespace ARBadmintonNet.UI
             modeSwitchButton.transform.SetParent(canvas.transform, false);
             
             var rt = modeSwitchButton.AddComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0.5f, 1);
-            rt.anchorMax = new Vector2(0.5f, 1);
-            rt.anchoredPosition = new Vector2(0, -140); // Safe area kept
-            rt.sizeDelta = new Vector2(350, 90); // Increased from 260x70 to match scale
+            rt.anchorMin = new Vector2(1, 1);  // Top-right
+            rt.anchorMax = new Vector2(1, 1);
+            rt.anchoredPosition = new Vector2(-30, -100); // 30px from right, 100px from top (safe area)
+            rt.sizeDelta = new Vector2(240, 60);
             
             var img = modeSwitchButton.AddComponent<Image>();
             img.color = switchBtnColor;
@@ -164,8 +167,8 @@ namespace ARBadmintonNet.UI
             textRT.offsetMax = Vector2.zero;
             
             var tmp = textGO.AddComponent<TextMeshProUGUI>();
-            tmp.text = "Switch Mode";
-            tmp.fontSize = 28; // Increased from 20
+            tmp.text = "⇄ Switch";
+            tmp.fontSize = 22;
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.color = Color.white;
             tmp.fontStyle = FontStyles.Bold;
@@ -218,7 +221,7 @@ namespace ARBadmintonNet.UI
             
             var titleTmp = titleGO.AddComponent<TextMeshProUGUI>();
             titleTmp.text = title;
-            titleTmp.fontSize = 28;
+            titleTmp.fontSize = 36;
             titleTmp.alignment = TextAlignmentOptions.MidlineLeft;
             titleTmp.color = Color.white;
             titleTmp.fontStyle = FontStyles.Bold;
@@ -235,7 +238,7 @@ namespace ARBadmintonNet.UI
             
             var descTmp = descGO.AddComponent<TextMeshProUGUI>();
             descTmp.text = description;
-            descTmp.fontSize = 16;
+            descTmp.fontSize = 20;
             descTmp.alignment = TextAlignmentOptions.TopLeft;
             descTmp.color = new Color(1, 1, 1, 0.75f);
         }
@@ -272,6 +275,10 @@ namespace ARBadmintonNet.UI
         
         public void SwitchToMode(AppMode mode)
         {
+            // Start AR session when first mode is selected
+            if (arSessionManager != null)
+                arSessionManager.StartARSession();
+            
             // Hide startup panel
             if (startupPanel != null) startupPanel.SetActive(false);
             
@@ -300,14 +307,14 @@ namespace ARBadmintonNet.UI
                 SetCourtActive(false);
                 
                 // Update switch button text
-                UpdateSwitchButtonText("Court Mode");
+                UpdateSwitchButtonText("⇄ Court Mode");
             }
             else if (mode == AppMode.Court)
             {
                 SetNetActive(false);
                 SetCourtActive(true);
                 
-                UpdateSwitchButtonText("Net Mode");
+                UpdateSwitchButtonText("⇄ Net Mode");
             }
             
             // Show the persistent mode switch button

@@ -14,7 +14,7 @@ namespace ARBadmintonNet.AR
         [SerializeField] private ARPlaneManager planeManager;
         
         [Header("Settings")]
-        [SerializeField] private bool autoStartSession = true;
+        [SerializeField] private bool autoStartSession = false;
         
         public bool IsSessionActive { get; private set; }
         public TrackingState TrackingState { get; private set; }
