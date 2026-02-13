@@ -135,9 +135,17 @@ public class ScreenRecorderBridge {
                 this.permissionGranted = true;
                 Log.d(TAG, "Screen capture permission granted");
 
-                // If buffering was pending, start it now
+                // Start foreground service FIRST (must happen on main thread, immediately)
+                startForegroundService();
+
+                // Delay startBufferingInternal to let the foreground service establish
                 if (!isBuffering) {
-                    startBufferingInternal();
+                    mainHandler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            startBufferingInternal();
+                        }
+                    }, 500);
                 }
             } else {
                 this.permissionGranted = false;
@@ -168,8 +176,7 @@ public class ScreenRecorderBridge {
 
     private void startBufferingInternal() {
         try {
-            // Android 10+ requires a foreground service before using MediaProjection
-            startForegroundService();
+            // Foreground service should already be running (started in onActivityResult)
 
             mediaProjection = projectionManager.getMediaProjection(resultCode, resultData);
             if (mediaProjection == null) {
