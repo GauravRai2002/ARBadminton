@@ -168,10 +168,14 @@ public class ScreenRecorderBridge {
 
     private void startBufferingInternal() {
         try {
+            // Android 10+ requires a foreground service before using MediaProjection
+            startForegroundService();
+
             mediaProjection = projectionManager.getMediaProjection(resultCode, resultData);
             if (mediaProjection == null) {
                 errorMessage = "Failed to create MediaProjection";
                 Log.e(TAG, errorMessage);
+                stopForegroundService();
                 return;
             }
 
@@ -193,6 +197,7 @@ public class ScreenRecorderBridge {
         } catch (Exception e) {
             errorMessage = "Failed to start buffering: " + e.getMessage();
             Log.e(TAG, errorMessage, e);
+            stopForegroundService();
         }
     }
 
@@ -307,6 +312,8 @@ public class ScreenRecorderBridge {
             mediaProjection.stop();
             mediaProjection = null;
         }
+
+        stopForegroundService();
 
         Log.d(TAG, "Clip buffering stopped");
     }
@@ -466,5 +473,23 @@ public class ScreenRecorderBridge {
 
     public static int getRequestCode() {
         return REQUEST_CODE_SCREEN_CAPTURE;
+    }
+
+    // ====== Foreground Service ======
+
+    private void startForegroundService() {
+        Log.d(TAG, "Starting foreground service for MediaProjection");
+        Intent serviceIntent = new Intent(activity, ScreenRecorderService.class);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            activity.startForegroundService(serviceIntent);
+        } else {
+            activity.startService(serviceIntent);
+        }
+    }
+
+    private void stopForegroundService() {
+        Log.d(TAG, "Stopping foreground service");
+        Intent serviceIntent = new Intent(activity, ScreenRecorderService.class);
+        activity.stopService(serviceIntent);
     }
 }

@@ -35,5 +35,11 @@
             android:name="com.arbadmintonnet.replay.ScreenRecorderActivity"
             android:exported="false"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <!-- Foreground service required for MediaProjection on Android 10+ -->
+        <service
+            android:name="com.arbadmintonnet.replay.ScreenRecorderService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
     </application>
 </manifest>
