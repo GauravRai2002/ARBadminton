@@ -68,15 +68,16 @@ namespace ARBadmintonNet.Detection
 
         private void OnEnable()
         {
-            if (cameraManager != null)
-            {
-                cameraManager.frameReceived += OnCameraFrameReceived;
-                debugStatus = "Subscribed to AR camera frames";
-            }
-            else
-            {
-                debugStatus = "No ARCameraManager - using render capture fallback";
-            }
+            // DISABLED for debugging OpenCVDetector
+            // if (cameraManager != null)
+            // {
+            //     cameraManager.frameReceived += OnCameraFrameReceived;
+            //     debugStatus = "Subscribed to AR camera frames";
+            // }
+            // else
+            // {
+            //     debugStatus = "No ARCameraManager - using render capture fallback";
+            // }
         }
 
         private void OnDisable()
@@ -94,16 +95,19 @@ namespace ARBadmintonNet.Detection
                 return;
 
             // Try to get CPU image from AR camera
-            if (cameraManager.TryAcquireLatestCpuImage(out var cpuImage))
-            {
-                // Process the image silently
-                ProcessCpuImage(cpuImage);
-                cpuImage.Dispose();
-            }
-            else
-            {
-                debugStatus = "TryAcquireLatestCpuImage FAILED";
-            }
+            // if (cameraManager.TryAcquireLatestCpuImage(out var cpuImage))
+            // {
+            //     // Process the image silently
+            //     ProcessCpuImage(cpuImage);
+            //     cpuImage.Dispose();
+            // }
+            // else
+            // {
+            //     debugStatus = "TryAcquireLatestCpuImage FAILED (Disabled)";
+            // }
+
+            // Always use Render Capture fallback for now (Vulkan fix)
+            ProcessRenderCapture();
         }
 
         private void Update()

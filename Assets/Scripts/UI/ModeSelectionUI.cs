@@ -17,8 +17,11 @@ namespace ARBadmintonNet.UI
         [SerializeField] private NetPlacementUI netUI;
         [SerializeField] private CourtPlacementUI courtUI;
         [SerializeField] private ARBadmintonNet.Detection.MotionBasedTracker motionTracker;
+        [SerializeField] private ARBadmintonNet.Detection.OpenCVDetector openCVDetector;
         [SerializeField] private ARBadmintonNet.AR.ARSessionManager arSessionManager;
         [SerializeField] private ARBadmintonNet.Replay.ReplayManager replayManager;
+
+
         [SerializeField] private ARBadmintonNet.Replay.ReplayUI replayUI;
         [SerializeField] private ScoreUI scoreUI;
         
@@ -34,10 +37,15 @@ namespace ARBadmintonNet.UI
         private static readonly Color courtModeColor = new Color(0.15f, 0.65f, 0.35f, 0.85f);
         private static readonly Color switchBtnColor = new Color(0.12f, 0.12f, 0.18f, 0.85f);
         
+        private GameObject detectionSwitchButton;
+        private bool isMLMode = true; // Default to ML if available
+        private ARBadmintonNet.GameManager gameManager;
+
         public AppMode CurrentMode => currentMode;
         
         private void Awake()
         {
+            gameManager = FindObjectOfType<ARBadmintonNet.GameManager>();
             if (netPlacement == null)
                 netPlacement = FindObjectOfType<ARBadmintonNet.AR.NetPlacementController>();
             if (courtPlacement == null)
@@ -48,6 +56,16 @@ namespace ARBadmintonNet.UI
                 courtUI = FindObjectOfType<CourtPlacementUI>();
             if (motionTracker == null)
                 motionTracker = FindObjectOfType<ARBadmintonNet.Detection.MotionBasedTracker>();
+                
+            if (openCVDetector == null)
+                openCVDetector = FindObjectOfType<ARBadmintonNet.Detection.OpenCVDetector>();
+            if (openCVDetector == null)
+            {
+                var go = new GameObject("OpenCVDetector");
+                openCVDetector = go.AddComponent<ARBadmintonNet.Detection.OpenCVDetector>();
+                Debug.Log("[ModeSelection] Auto-created OpenCVDetector");
+            }
+
             if (arSessionManager == null)
                 arSessionManager = FindObjectOfType<ARBadmintonNet.AR.ARSessionManager>();
             if (replayManager == null)
@@ -121,6 +139,7 @@ namespace ARBadmintonNet.UI
             
             CreateStartupPanel();
             CreateModeSwitchButton();
+            CreateDetectionSwitchButton();
         }
         
         private void CreateStartupPanel()
@@ -224,6 +243,66 @@ namespace ARBadmintonNet.UI
             modeSwitchButton.SetActive(false);
         }
         
+        private void CreateDetectionSwitchButton()
+        {
+            detectionSwitchButton = new GameObject("DetectionSwitchBtn");
+            detectionSwitchButton.transform.SetParent(canvas.transform, false);
+            
+            var rt = detectionSwitchButton.AddComponent<RectTransform>();
+            rt.anchorMin = new Vector2(1, 1); 
+            rt.anchorMax = new Vector2(1, 1);
+            rt.pivot = new Vector2(1, 1);      
+            rt.anchoredPosition = new Vector2(-50, -200); // Below Home button
+            rt.sizeDelta = new Vector2(200, 50);
+            
+            var img = detectionSwitchButton.AddComponent<Image>();
+            img.color = new Color(0.2f, 0.6f, 0.3f, 0.85f); // Green-ish for ML
+            
+            var btn = detectionSwitchButton.AddComponent<Button>();
+            btn.onClick.AddListener(OnDetectionSwitchPressed);
+            
+            var textGO = new GameObject("Text");
+            textGO.transform.SetParent(detectionSwitchButton.transform, false);
+            
+            var textRT = textGO.AddComponent<RectTransform>();
+            textRT.anchorMin = Vector2.zero;
+            textRT.anchorMax = Vector2.one;
+            textRT.offsetMin = Vector2.zero;
+            textRT.offsetMax = Vector2.zero;
+            
+            var tmp = textGO.AddComponent<TextMeshProUGUI>();
+            tmp.text = "MODE: ML";
+            tmp.fontSize = 20;
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.color = Color.white;
+            tmp.fontStyle = FontStyles.Bold;
+            
+            detectionSwitchButton.SetActive(false);
+        }
+
+        private void OnDetectionSwitchPressed()
+        {
+            isMLMode = !isMLMode;
+            
+            if (gameManager != null)
+            {
+                gameManager.SetDetectionMode(isMLMode);
+            }
+            
+            var tmp = detectionSwitchButton.GetComponentInChildren<TextMeshProUGUI>();
+            if (tmp != null)
+            {
+                tmp.text = isMLMode ? "MODE: ML" : "MODE: MOTION";
+            }
+            
+            var img = detectionSwitchButton.GetComponent<Image>();
+            if (img != null)
+            {
+                // Green for ML, Blue for Motion
+                img.color = isMLMode ? new Color(0.2f, 0.6f, 0.3f, 0.85f) : new Color(0.2f, 0.3f, 0.7f, 0.85f);
+            }
+        }
+        
         private void CreateModeButton(Transform parent, string name,
             string title, string description,
             Vector2 anchorMin, Vector2 anchorMax, Vector2 position, Vector2 size,
@@ -323,6 +402,7 @@ namespace ARBadmintonNet.UI
                 
             if (startupPanel != null) startupPanel.SetActive(true);
             if (modeSwitchButton != null) modeSwitchButton.SetActive(false);
+            if (detectionSwitchButton != null) detectionSwitchButton.SetActive(false);
             
             // Hide replay controls when back at startup
             if (replayUI != null) replayUI.HideAll();
@@ -424,6 +504,19 @@ namespace ARBadmintonNet.UI
             // Show the persistent mode switch button
             if (modeSwitchButton != null) modeSwitchButton.SetActive(true);
             
+            // Show detection button if in AR mode
+            if (detectionSwitchButton != null)
+            {
+                bool showDetect = (mode == AppMode.Net || mode == AppMode.Court);
+                detectionSwitchButton.SetActive(showDetect);
+                // Reset state to sync with GameManager defaults (usually starts with ML if available)
+                // or keep persistence. Let's sync.
+                if (showDetect && gameManager != null)
+                {
+                   gameManager.SetDetectionMode(isMLMode);
+                }
+            }
+            
             Debug.Log($"[ModeSelection] Switched to {mode} mode");
         }
         
@@ -498,6 +591,16 @@ namespace ARBadmintonNet.UI
             if (motionTracker != null)
             {
                 motionTracker.enabled = active;
+            }
+
+            if (openCVDetector != null)
+            {
+                Debug.Log($"[ModeSelection] Setting OpenCVDetector enabled: {active}");
+                openCVDetector.enabled = active;
+            }
+            else
+            {
+                 Debug.LogWarning($"[ModeSelection] OpenCVDetector reference is NULL in SetNetActive!");
             }
         }
         

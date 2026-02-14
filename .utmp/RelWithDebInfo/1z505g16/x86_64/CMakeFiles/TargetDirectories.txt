@@ -1,0 +1,8 @@
+/Users/gauravrai/projects/ARBadmintonNet/.utmp/RelWithDebInfo/1z505g16/x86_64/CMakeFiles/edit_cache.dir
+/Users/gauravrai/projects/ARBadmintonNet/.utmp/RelWithDebInfo/1z505g16/x86_64/CMakeFiles/rebuild_cache.dir
+/Users/gauravrai/projects/ARBadmintonNet/.utmp/RelWithDebInfo/1z505g16/x86_64/GameActivity/CMakeFiles/game.dir
+/Users/gauravrai/projects/ARBadmintonNet/.utmp/RelWithDebInfo/1z505g16/x86_64/GameActivity/CMakeFiles/edit_cache.dir
+/Users/gauravrai/projects/ARBadmintonNet/.utmp/RelWithDebInfo/1z505g16/x86_64/GameActivity/CMakeFiles/rebuild_cache.dir
+/Users/gauravrai/projects/ARBadmintonNet/.utmp/RelWithDebInfo/1z505g16/x86_64/FramePacing/CMakeFiles/swappywrapper.dir
+/Users/gauravrai/projects/ARBadmintonNet/.utmp/RelWithDebInfo/1z505g16/x86_64/FramePacing/CMakeFiles/edit_cache.dir
+/Users/gauravrai/projects/ARBadmintonNet/.utmp/RelWithDebInfo/1z505g16/x86_64/FramePacing/CMakeFiles/rebuild_cache.dir

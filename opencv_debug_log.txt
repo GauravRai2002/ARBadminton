@@ -1,0 +1,47 @@
+02-14 12:09:31.951 19105   940 F libc    : Fatal signal 11 (SIGSEGV), code 2 (SEGV_ACCERR), fault addr 0x6f66f0369c in tid 940 (UnityMain), pid 19105 (rav.ARBadminton)
+02-14 12:09:32.065  1012  1012 F DEBUG   : pid: 19105, tid: 940, name: UnityMain  >>> com.gaurav.ARBadminton <<<
+02-14 12:09:32.072  1012  1012 F DEBUG   :       #24 pc 00000000000125a0  /data/app/~~tGgw10HN4cFnJtwl2g1FaA==/com.gaurav.ARBadminton-DHofsMO07SemZo81Mn-XSg==/lib/arm64/libgame.so (Unity::UnityApplication::ProcessFrame()+48) (BuildId: aa6d0f8424331d36c21e9f4d07bf3f9774341459)
+02-14 12:09:32.072  1012  1012 F DEBUG   :       #25 pc 00000000000127cc  /data/app/~~tGgw10HN4cFnJtwl2g1FaA==/com.gaurav.ARBadminton-DHofsMO07SemZo81Mn-XSg==/lib/arm64/libgame.so (Unity::UnityApplication::Loop()+392) (BuildId: aa6d0f8424331d36c21e9f4d07bf3f9774341459)
+02-14 12:09:42.907 19107  1199 F libc    : Fatal signal 11 (SIGSEGV), code 2 (SEGV_ACCERR), fault addr 0x6f6700369c in tid 1199 (UnityMain), pid 19107 (rav.ARBadminton)
+02-14 12:09:42.992  1284  1284 F DEBUG   : pid: 19107, tid: 1199, name: UnityMain  >>> com.gaurav.ARBadminton <<<
+02-14 12:09:42.994  1284  1284 F DEBUG   :       #24 pc 00000000000125a0  /data/app/~~tGgw10HN4cFnJtwl2g1FaA==/com.gaurav.ARBadminton-DHofsMO07SemZo81Mn-XSg==/lib/arm64/libgame.so (Unity::UnityApplication::ProcessFrame()+48) (BuildId: aa6d0f8424331d36c21e9f4d07bf3f9774341459)
+02-14 12:09:42.994  1284  1284 F DEBUG   :       #25 pc 00000000000127cc  /data/app/~~tGgw10HN4cFnJtwl2g1FaA==/com.gaurav.ARBadminton-DHofsMO07SemZo81Mn-XSg==/lib/arm64/libgame.so (Unity::UnityApplication::Loop()+392) (BuildId: aa6d0f8424331d36c21e9f4d07bf3f9774341459)
+02-14 12:50:42.955 30341  6419 I Unity   : [OpenCV] Frame Received (Count: 2400)
+02-14 12:50:42.955 30341  6419 I Unity   : UnityEngine.DebugLogHandler:Internal_Log(LogType, LogOption, String, Object)
+02-14 12:50:42.955 30341  6419 I Unity   : ARBadmintonNet.Detection.OpenCVDetector:OnCameraFrameReceived(ARCameraFrameEventArgs)
+02-14 12:50:42.955 30341  6419 I Unity   : UnityEngine.XR.ARFoundation.ARCameraManager:InvokeFrameReceivedEvent(XRCameraFrame, ReadOnlyListSpan`1)
+02-14 12:50:42.955 30341  6419 I Unity   : UnityEngine.XR.ARFoundation.ARCameraManager:Update()
+02-14 12:50:42.955 30341  6419 I Unity   : 
+02-14 12:50:42.956 30341  6419 W Unity   : [OpenCV] Failed to acquire CPU image
+02-14 12:50:42.956 30341  6419 W Unity   : UnityEngine.DebugLogHandler:Internal_Log(LogType, LogOption, String, Object)
+02-14 12:50:42.956 30341  6419 W Unity   : ARBadmintonNet.Detection.OpenCVDetector:OnCameraFrameReceived(ARCameraFrameEventArgs)
+02-14 12:50:42.956 30341  6419 W Unity   : UnityEngine.XR.ARFoundation.ARCameraManager:InvokeFrameReceivedEvent(XRCameraFrame, ReadOnlyListSpan`1)
+02-14 12:50:42.956 30341  6419 W Unity   : UnityEngine.XR.ARFoundation.ARCameraManager:Update()
+02-14 12:50:42.956 30341  6419 W Unity   : 
+02-14 12:50:43.123 30341  6419 I Unity   : [MotionTracker] Processed: 1 | Motions: 0 | thresh=30
+02-14 12:50:43.123 30341  6419 I Unity   : UnityEngine.DebugLogHandler:Internal_Log(LogType, LogOption, String, Object)
+02-14 12:50:43.123 30341  6419 I Unity   : ARBadmintonNet.Detection.MotionBasedTracker:Update()
+02-14 12:50:43.123 30341  6419 I Unity   : 
+02-14 12:50:44.959 30341  6419 I Unity   : [OpenCV] Frame Received (Count: 2460)
+02-14 12:50:44.959 30341  6419 I Unity   : UnityEngine.DebugLogHandler:Internal_Log(LogType, LogOption, String, Object)
+02-14 12:50:44.959 30341  6419 I Unity   : ARBadmintonNet.Detection.OpenCVDetector:OnCameraFrameReceived(ARCameraFrameEventArgs)
+02-14 12:50:44.959 30341  6419 I Unity   : UnityEngine.XR.ARFoundation.ARCameraManager:InvokeFrameReceivedEvent(XRCameraFrame, ReadOnlyListSpan`1)
+02-14 12:50:44.959 30341  6419 I Unity   : UnityEngine.XR.ARFoundation.ARCameraManager:Update()
+02-14 12:50:44.959 30341  6419 I Unity   : 
+02-14 12:50:44.961 30341  6419 W Unity   : [OpenCV] Failed to acquire CPU image
+02-14 12:50:44.961 30341  6419 W Unity   : UnityEngine.DebugLogHandler:Internal_Log(LogType, LogOption, String, Object)
+02-14 12:50:44.961 30341  6419 W Unity   : ARBadmintonNet.Detection.OpenCVDetector:OnCameraFrameReceived(ARCameraFrameEventArgs)
+02-14 12:50:44.961 30341  6419 W Unity   : UnityEngine.XR.ARFoundation.ARCameraManager:InvokeFrameReceivedEvent(XRCameraFrame, ReadOnlyListSpan`1)
+02-14 12:50:44.961 30341  6419 W Unity   : UnityEngine.XR.ARFoundation.ARCameraManager:Update()
+02-14 12:50:44.961 30341  6419 W Unity   : 
+02-14 12:50:46.628 30341  6419 I Unity   : Handle cmd APP_CMD_LOST_FOCUS(8)
+02-14 12:50:47.225 30341  6419 I Unity   : Handle cmd APP_CMD_PAUSE(14)
+02-14 12:50:47.487 30341  6419 I Unity   : Handle cmd APP_CMD_TERM_WINDOW(2)
+02-14 12:50:47.583 30341  6419 I Unity   : Handle cmd APP_CMD_LOW_MEMORY(10)
+02-14 12:50:47.585 30341  6419 I Unity   : Handle cmd APP_CMD_STOP(15)
+02-14 12:50:47.587 30341  6419 I Unity   : Handle cmd APP_CMD_SAVE_STATE(13)
+02-14 12:50:47.839 30341  6419 I Unity   : Handle cmd APP_CMD_DESTROY(16)
+02-14 12:50:47.839 30341  6419 I Unity   : UnityApplication::DestroyInstance
+02-14 12:52:18.667 14696  5829 W AsyncOperation: OperationException[Status{statusCode=Stale snapshot for com.google.android.gms.device_performance#com.google.android.apps.youtube.music(new configuration available), resolution=null}]
+02-14 12:53:48.212 14696  5829 W AsyncOperation: OperationException[Status{statusCode=Stale snapshot for tiktok.device#com.google.android.apps.messaging(new configuration available), resolution=null}]
+02-14 12:58:04.913 14696  1922 W AsyncOperation: OperationException[Status{statusCode=Stale snapshot for tiktok.device#com.google.android.googlequicksearchbox(new configuration available), resolution=null}]

@@ -936,6 +936,57 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ARBadmintonNet.AR.ARCameraPoseDriver
+--- !u!1 &1748738963
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1748738965}
+  - component: {fileID: 1748738964}
+  m_Layer: 0
+  m_Name: OpenCVDetector
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1748738964
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1748738963}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1d09181a3732495a854ffd26ae6ab24, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ARBadmintonNet.Detection.OpenCVDetector
+  targetColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  hueThreshold: 10
+  minContourArea: 100
+  maxContourArea: 5000
+  minCircularity: 0.6
+  processEveryNFrames: 2
+  downscaleFactor: 0.5
+--- !u!4 &1748738965
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1748738963}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 314.26764, y: 268.5451, z: -22.64301}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2131870679
 GameObject:
   m_ObjectHideFlags: 0
@@ -1372,6 +1423,7 @@ MonoBehaviour:
   planeManager: {fileID: 2131870690}
   netPlacement: {fileID: 2131870689}
   motionTracker: {fileID: 2131870688}
+  openCVDetector: {fileID: 1748738964}
   collisionDetector: {fileID: 2131870687}
   feedbackManager: {fileID: 2131870686}
   autoStartTracking: 1
@@ -1454,6 +1506,10 @@ MonoBehaviour:
   netUI: {fileID: 0}
   courtUI: {fileID: 0}
   motionTracker: {fileID: 0}
+  arSessionManager: {fileID: 0}
+  replayManager: {fileID: 0}
+  replayUI: {fileID: 0}
+  scoreUI: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -1463,3 +1519,4 @@ SceneRoots:
   - {fileID: 2131870696}
   - {fileID: 465376090}
   - {fileID: 191473897}
+  - {fileID: 1748738965}

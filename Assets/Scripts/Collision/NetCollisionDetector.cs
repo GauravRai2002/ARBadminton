@@ -20,7 +20,7 @@ namespace ARBadmintonNet.Collision
         [SerializeField] private int trajectoryLookAhead = 3; // frames
         
         [Header("Debug")]
-        [SerializeField] private bool debugVisualization = true;
+        [SerializeField] private bool debugVisualization = false;
         [SerializeField] private Color debugRayColor = Color.red;
         
         private TrajectoryTracker trajectoryTracker;
@@ -230,6 +230,25 @@ namespace ARBadmintonNet.Collision
             return Vector3.zero;
         }
         
+        public bool CheckVisualOverlap(Ray ray, out RaycastHit hitInfo)
+        {
+            if (netCollider != null)
+            {
+                // Raycast against the mesh collider
+                if (netCollider.Raycast(ray, out hitInfo, 20.0f))
+                {
+                    if (debugVisualization)
+                    {
+                        Debug.DrawLine(ray.origin, hitInfo.point, Color.magenta, 1.0f);
+                        // Debug.Log($"[NetCollision] Visual overlap detected at {hitInfo.point}");
+                    }
+                    return true;
+                }
+            }
+            hitInfo = new RaycastHit();
+            return false;
+        }
+
         private void OnDrawGizmos()
         {
             if (!debugVisualization || !netInitialized)

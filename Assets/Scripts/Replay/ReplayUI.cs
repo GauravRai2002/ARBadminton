@@ -272,6 +272,11 @@ namespace ARBadmintonNet.Replay
             CreateControlButton(controlsPanel.transform, "CloseBtn", "X", 
                 new Vector2(1, 0), new Vector2(1, 0),
                 new Vector2(-100, btnY), new Vector2(btnSize, btnSize), CloseReplay);
+
+            // SAVE Button (Center-Right, next to Fwd)
+            CreateControlButton(controlsPanel.transform, "SaveBtn", "SAVE", 
+                new Vector2(0.5f, 0), new Vector2(0.5f, 0),
+                new Vector2(250, btnY), new Vector2(btnSize + 20, btnSize), OnSaveReplay);
             
             videoOverlay.SetActive(false);
         }
@@ -631,6 +636,68 @@ namespace ARBadmintonNet.Replay
         private void OnVideoFinished(VideoPlayer vp)
         {
             Debug.Log("[ReplayUI] Replay finished");
+        }
+
+        private void OnSaveReplay()
+        {
+            if (string.IsNullOrEmpty(currentClipPath) || !System.IO.File.Exists(currentClipPath))
+            {
+                if (loadingIndicator != null)
+                {
+                    loadingIndicator.SetActive(true);
+                    var tmp = loadingIndicator.GetComponent<TextMeshProUGUI>();
+                    if(tmp) tmp.text = "Error: No file found!";
+                    StartCoroutine(AutoHideLoader(2f));
+                }
+                return;
+            }
+
+            // Generate a timestamped filename
+            string timestamp = System.DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            string fileName = $"BadmintonReplay_{timestamp}.mp4";
+            
+            // For now, save to persistentDataPath which is accessible via Files app on iOS
+            string destPath = System.IO.Path.Combine(Application.persistentDataPath, fileName);
+            
+            try
+            {
+                System.IO.File.Copy(currentClipPath, destPath, true);
+                Debug.Log($"[ReplayUI] Saved to: {destPath}");
+                
+                // Show success message
+                if (loadingIndicator != null)
+                {
+                    loadingIndicator.SetActive(true);
+                    var tmp = loadingIndicator.GetComponent<TextMeshProUGUI>();
+                    // Show truncated path for readability
+                    if(tmp) tmp.text = $"Saved to Files!\n{fileName}";
+                }
+                
+                // Ideally we would use NativeGallery.SaveVideoToGallery(destPath, "ARBadminton", fileName);
+                // But without the plugin, this is the best we can do for now.
+                // The user can access it via the "Files" app on their device.
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[ReplayUI] Save failed: {e.Message}");
+                if (loadingIndicator != null)
+                {
+                    loadingIndicator.SetActive(true);
+                    var tmp = loadingIndicator.GetComponent<TextMeshProUGUI>();
+                    if(tmp) tmp.text = "Save Failed!";
+                }
+            }
+            
+            StartCoroutine(AutoCloseAfterDelay(3f)); // Auto close replay after saving? Or just hide loader?
+            // Actually let's just hide the loader so they can keep watching
+            StopAllCoroutines(); // Stop any previous auto-close
+            StartCoroutine(AutoHideLoader(3f));
+        }
+
+        private IEnumerator AutoHideLoader(float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            if (loadingIndicator != null) loadingIndicator.SetActive(false);
         }
         
         public void CloseReplay()

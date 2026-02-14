@@ -36,7 +36,9 @@ namespace ARBadmintonNet.Models
     public enum DetectionMethod
     {
         ColorTracking,
+        OpenCV,
         MLDetection,
+        ML, // Added for YOLODetector compatibility
         Hybrid,
         Manual
     }

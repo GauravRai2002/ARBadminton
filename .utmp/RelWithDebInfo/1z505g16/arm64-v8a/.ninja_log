@@ -1,0 +1,23 @@
+# ninja log v5
+4	22503	1771064620219694331	GameActivity/CMakeFiles/game.dir/UGAApplication.cpp.o	a63c735b78db355b
+22503	32041	1771064629758086485	/Users/gauravrai/projects/ARBadmintonNet/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/1z505g16/obj/arm64-v8a/libgame.so	d235630645b045e3
+4	22241	1771064619957033553	GameActivity/CMakeFiles/game.dir/UGADebug.cpp.o	14f6266a4fa86fbd
+4	22140	1771064619853948929	GameActivity/CMakeFiles/game.dir/UGAConfiguration.cpp.o	c3f8e892adf373d6
+5	22117	1771064619832177214	GameActivity/CMakeFiles/game.dir/UGAInputKeyEvent.cpp.o	d190640f056f72fa
+5	22137	1771064619850938684	GameActivity/CMakeFiles/game.dir/UGAEntry.cpp.o	70f9e698fa132864
+5	22460	1771064620176702360	GameActivity/CMakeFiles/game.dir/UGAInput.cpp.o	5efa1b176cacb5b7
+5	22294	1771064620010249799	GameActivity/CMakeFiles/game.dir/UGASoftKeyboard.cpp.o	a5547b39ea0060f0
+21488	32105	1771064629779615506	/Users/gauravrai/projects/ARBadmintonNet/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/1z505g16/obj/arm64-v8a/libswappywrapper.so	ff39be2884886176
+5	22169	1771064619884875170	GameActivity/CMakeFiles/game.dir/UGAInputMotionEvent.cpp.o	fa88603ce6224d59
+6	21488	1771064619206854654	FramePacing/CMakeFiles/swappywrapper.dir/UnitySwappyWrapper.cpp.o	5fd22f2b94d187bf
+4	16336	1771066054889106906	FramePacing/CMakeFiles/swappywrapper.dir/UnitySwappyWrapper.cpp.o	5fd22f2b94d187bf
+3	16905	1771066055454706878	GameActivity/CMakeFiles/game.dir/UGAInputKeyEvent.cpp.o	d190640f056f72fa
+3	16934	1771066055484722803	GameActivity/CMakeFiles/game.dir/UGAInputMotionEvent.cpp.o	fa88603ce6224d59
+2	16965	1771066055512963939	GameActivity/CMakeFiles/game.dir/UGAConfiguration.cpp.o	c3f8e892adf373d6
+3	16984	1771066055535092082	GameActivity/CMakeFiles/game.dir/UGAEntry.cpp.o	70f9e698fa132864
+4	17049	1771066055600197970	GameActivity/CMakeFiles/game.dir/UGASoftKeyboard.cpp.o	a5547b39ea0060f0
+2	17061	1771066055612704581	GameActivity/CMakeFiles/game.dir/UGADebug.cpp.o	14f6266a4fa86fbd
+3	17133	1771066055683217130	GameActivity/CMakeFiles/game.dir/UGAInput.cpp.o	5efa1b176cacb5b7
+2	17192	1771066055743739981	GameActivity/CMakeFiles/game.dir/UGAApplication.cpp.o	a63c735b78db355b
+17192	26024	1771066064575102875	/Users/gauravrai/projects/ARBadmintonNet/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/1z505g16/obj/arm64-v8a/libgame.so	d235630645b045e3
+16337	26096	1771066064606082674	/Users/gauravrai/projects/ARBadmintonNet/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/1z505g16/obj/arm64-v8a/libswappywrapper.so	ff39be2884886176
